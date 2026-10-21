@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>118 Punch List</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root {
+  --bg: #EEF0F2; --surface: #FFFFFF; --ink: #18202B; --muted: #5B6675; --line: #D3D8DE;
+  --tape: #F2C230; --tape-ink: #2A2100; --done: #2F7D4F; --danger: #B3261E;
+  color-scheme: light;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #12161C; --surface: #1C222B; --ink: #E9EDF2; --muted: #9AA5B3; --line: #2E3642;
+    --tape: #E8B923; --tape-ink: #1E1700; --done: #5FBF84; --danger: #F2847C;
+    color-scheme: dark;
+  }
+}
+*, *::before, *::after { box-sizing: inherit; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 17px; line-height: 1.45; }
+img { max-width: 100%; }
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--tape); outline-offset: 2px; }
+
+.wrap { max-width: 760px; margin: 0 auto; padding: 16px 16px 130px; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 40px; }
+.link { background: none; border: 0; padding: 8px 0; color: var(--muted); font-weight: 500; text-decoration: none; }
+.link:hover { color: var(--ink); }
+h1, h2, .unitno, .big { font-family: "Barlow Condensed", "Arial Narrow", sans-serif; }
+h1 { font-size: 36px; font-weight: 800; margin: 8px 0 4px; }
+h2 { font-size: 24px; font-weight: 800; margin: 32px 0 6px; }
+.sub { color: var(--muted); margin: 0 0 20px; }
+
+.unitno { font-weight: 800; font-size: clamp(88px, 28vw, 168px); line-height: .85; letter-spacing: -.02em; margin: 12px 0 6px; }
+.pagetitle { font-weight: 800; font-size: clamp(48px, 14vw, 88px); line-height: .9; margin: 12px 0 6px; font-family: "Barlow Condensed", "Arial Narrow", sans-serif; }
+.unitmeta { color: var(--muted); margin-bottom: 20px; }
+
+.stats { display: flex; gap: 28px; margin: 12px 0 8px; flex-wrap: wrap; }
+.stat .big { font-size: 56px; font-weight: 800; line-height: 1; }
+.stat span { color: var(--muted); font-size: 15px; }
+
+.rows { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.rows li { border-bottom: 1px solid var(--line); }
+.rows button { width: 100%; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; background: none; border: 0; padding: 12px 4px; text-align: left; }
+.rows .n { font-weight: 600; }
+.rows.units .n { font-family: "Barlow Condensed", "Arial Narrow", sans-serif; font-size: 28px; font-weight: 800; }
+.bar { flex: 1; height: 6px; background: var(--line); border-radius: 3px; align-self: center; max-width: 160px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--tape); }
+.count { color: var(--muted); white-space: nowrap; }
+.count b { color: var(--ink); }
+
+.room { margin: 26px 0 8px; font-weight: 600; font-size: 15px; color: var(--muted); border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+.item { background: var(--surface); border-left: 6px solid var(--tape); border-radius: 4px; padding: 12px 14px; margin: 10px 0; display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: start; }
+.item.done { border-left-color: var(--done); opacity: .75; }
+.item h3 { margin: 0; font-size: 18px; font-weight: 600; }
+.item.done h3 { text-decoration: line-through; }
+.item .where { font-size: 14px; color: var(--muted); margin-bottom: 2px; }
+.item p { margin: 4px 0 0; color: var(--muted); font-size: 15px; white-space: pre-wrap; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.chip { font-size: 13px; font-weight: 500; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink); }
+.chip.none { color: var(--muted); border-style: dashed; }
+.when { font-size: 13px; color: var(--muted); margin-top: 6px; }
+.thumb { width: 84px; height: 84px; border-radius: 3px; background: var(--line); border: 0; padding: 0; overflow: hidden; }
+.thumb img { width: 84px; height: 84px; object-fit: cover; display: block; }
+.actions { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 4px; padding: 8px 14px; font-weight: 500; }
+.btn.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.btn.warn { color: var(--danger); }
+.btn.warn.armed { background: var(--danger); color: var(--surface); border-color: var(--danger); }
+.donebox summary { cursor: pointer; color: var(--muted); margin-top: 28px; font-weight: 500; }
+.empty { padding: 28px 0; color: var(--muted); }
+.foot { margin-top: 48px; color: var(--muted); font-size: 14px; display: flex; gap: 16px; flex-wrap: wrap; }
+
+.fab { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); background: var(--tape); color: var(--tape-ink); border: 0; border-radius: 999px; padding: 14px 26px; font-weight: 600; font-size: 18px; box-shadow: 0 6px 18px rgba(0,0,0,.18); z-index: 10; }
+
+.sheet-bg { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; z-index: 20; }
+.sheet-bg.open { display: block; }
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 21; background: var(--surface); border-radius: 12px 12px 0 0; max-height: 92%; overflow-y: auto; transform: translateY(105%); transition: transform .22s ease; padding: 18px 18px calc(20px + env(safe-area-inset-bottom, 0px)); max-width: 760px; margin: 0 auto; }
+.sheet.open { transform: none; }
+@media (prefers-reduced-motion: reduce) { .sheet { transition: none; } }
+.sheet h2 { margin: 0 0 10px; font-size: 28px; }
+label { display: block; font-weight: 500; font-size: 15px; margin: 12px 0 4px; }
+input[type=text], textarea, select { width: 100%; padding: 11px 12px; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); }
+textarea { min-height: 72px; resize: vertical; }
+.row { display: grid; grid-template-columns: 1fr 1.4fr; gap: 10px; }
+.photo-pick { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px dashed var(--muted); border-radius: 4px; background: var(--bg); margin-top: 4px; cursor: pointer; }
+.photo-pick img { width: 64px; height: 64px; object-fit: cover; border-radius: 3px; }
+.btns { display: flex; gap: 10px; margin-top: 18px; }
+.btns .btn { flex: 1; padding: 13px; }
+.err { color: var(--danger); font-size: 14px; margin-top: 10px; }
+
+.viewer { position: fixed; inset: 0; background: rgba(0,0,0,.92); z-index: 30; display: none; align-items: center; justify-content: center; padding: 20px; color: #fff; }
+.viewer.open { display: flex; }
+.viewer img { max-height: 100%; max-width: 100%; }
+
+#toast { position: fixed; left: 50%; transform: translate(-50%, 20px); opacity: 0; pointer-events: none; bottom: calc(86px + env(safe-area-inset-bottom, 0px)); z-index: 40; background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 6px; font-weight: 500; transition: opacity .2s, transform .2s; }
+#toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+.qrgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; margin-top: 16px; }
+.qrcard { background: #fff; color: #000; border-radius: 4px; padding: 14px; text-align: center; break-inside: avoid; }
+.qrcard .qr { display: flex; justify-content: center; }
+.qrcard .qr img, .qrcard .qr canvas { width: 140px; height: 140px; }
+.qrcard .n { font-family: "Barlow Condensed", "Arial Narrow", sans-serif; font-weight: 800; font-size: 34px; line-height: 1; margin-top: 8px; }
+.addunit { display: flex; gap: 8px; margin-top: 10px; }
+.addunit input { flex: 1; }
+.sharebox { display: flex; gap: 8px; margin: 4px 0 8px; }
+.sharebox input { flex: 1; font-size: 14px; }
+@media print { .top, .fab, .addunit, .sub, .foot, .noprint { display: none !important; } body { background: #fff; } }
+</style>
+</head>
+<body>
+<div class="wrap" id="app"><p class="empty">Loading punch list…</p></div>
+<button class="fab" id="fab" hidden>+ Add item</button>
+
+<div class="sheet-bg" id="sheetBg"></div>
+<form class="sheet" id="sheet" autocomplete="off">
+  <h2 id="sheetTitle">New punch item</h2>
+  <div class="row">
+    <div><label for="fUnit">Unit</label><input type="text" id="fUnit" placeholder="202" required></div>
+    <div><label for="fRoom">Room</label><input type="text" id="fRoom" list="rooms" placeholder="Kitchen" required></div>
+  </div>
+  <datalist id="rooms"></datalist>
+  <label for="fTitle">Problem</label>
+  <input type="text" id="fTitle" placeholder="Light switch cover missing" required>
+  <label for="fNotes">Notes for the worker (optional)</label>
+  <textarea id="fNotes" placeholder="Left of the fridge, by the pantry door"></textarea>
+  <div class="row">
+    <div><label for="fTrade">Trade</label><select id="fTrade"></select></div>
+    <div><label for="fWho">Assigned to (optional)</label><input type="text" id="fWho" list="people" placeholder="Mike"></div>
+  </div>
+  <datalist id="people"></datalist>
+  <label for="fPhoto">Photo</label>
+  <label class="photo-pick" for="fPhoto"><img id="fPreview" alt="" hidden><span id="fPhotoText">Take or choose a photo</span></label>
+  <input type="file" id="fPhoto" accept="image/*" capture="environment" hidden>
+  <div class="err" id="fErr" hidden></div>
+  <div class="btns">
+    <button type="button" class="btn" id="fCancel">Cancel</button>
+    <button type="submit" class="btn primary" id="fSave">Save item</button>
+  </div>
+</form>
+<div class="sheet-bg" id="authBg"></div>
+<form class="sheet" id="authSheet" autocomplete="off">
+  <h2>Owner sign in</h2>
+  <p class="note" style="color:var(--muted);margin:0 0 8px">Paste your GitHub access token. It stays on this device only.</p>
+  <label for="aTok">Access token</label>
+  <input type="password" id="aTok" placeholder="github_pat_…" required autocomplete="off" spellcheck="false">
+  <div class="err" id="aErr" hidden></div>
+  <div class="btns">
+    <button type="button" class="btn" id="aCancel">Cancel</button>
+    <button type="submit" class="btn primary" id="aSave">Sign in</button>
+  </div>
+</form>
+<div class="viewer" id="viewer"><img alt="Punch item photo"></div>
+
+<script>
+/* ================= SETTINGS ================= */
+const OWNER = "Lfriestedt";
+const REPO = "118-Punchlist";
+const BRANCH = "main";
+const SITE_NAME = "118 Punch List";
+const TRADES = ["Electrical", "Plumbing", "HVAC", "Drywall", "Paint", "Carpentry", "Flooring", "Tile", "Appliances", "Cleaning", "General"];
+const ROOMS = ["Kitchen", "Living room", "Bedroom 1", "Bedroom 2", "Bathroom", "Bathroom 2", "Hallway", "Entry", "Laundry", "Balcony", "Closet"];
+/* ============================================ */
+
+const RAW = `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/`;
+const API = `https://api.github.com/repos/${OWNER}/${REPO}`;
+const app = document.getElementById("app");
+const fab = document.getElementById("fab");
+document.title = SITE_NAME;
+
+let token = null;
+try { token = localStorage.getItem("pl_token"); } catch {}
+let isOwner = !!token, ready = false, failed = false, busy = false;
+let data = { units: {}, items: [] };
+const localPhotos = new Map();   // photo files saved this session, shown before the site rebuilds
+let route = parseHash();
+
+// ---------- helpers ----------
+const slug = s => String(s || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+function parseHash() {
+  const p = location.hash.replace(/^#\/?/, "").split("/").map(decodeURIComponent);
+  if (p[0] === "unit" && p[1]) return { view: "unit", key: p[1] };
+  if (p[0] === "trade" && p[1]) return { view: "trade", key: p[1] };
+  if (p[0] === "who" && p[1]) return { view: "who", key: p[1] };
+  if (p[0] === "qr") return { view: "qr" };
+  return { view: "home" };
+}
+const link = r => r.view === "home" ? "#/" : r.key ? `#/${r.view}/${encodeURIComponent(r.key)}` : `#/${r.view}`;
+function go(r) { if (location.hash !== link(r)) location.hash = link(r); else { route = r; render(); } }
+window.addEventListener("hashchange", () => { route = parseHash(); window.scrollTo(0, 0); render(); });
+const pageURL = r => location.origin + location.pathname + link(r);
+
+function el(tag, attrs = {}, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") n.className = v;
+    else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+    else if (v !== false && v != null) n.setAttribute(k, v);
+  }
+  for (const k of kids.flat()) if (k != null && k !== false) n.append(k.nodeType ? k : document.createTextNode(k));
+  return n;
+}
+const items = () => data.items || [];
+const unitName = s => data.units?.[s]?.name || items().find(i => i.unit === s)?.unitName || s;
+const isOpen = i => i.status !== "done";
+const fmtDate = t => t ? new Date(t).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "";
+const plural = (n, a, b) => `${n} ${n === 1 ? a : b}`;
+function allUnits() {
+  const s = new Set([...Object.keys(data.units || {}), ...items().map(i => i.unit)]);
+  return [...s].sort((a, b) => unitName(a).localeCompare(unitName(b), undefined, { numeric: true }));
+}
+function toast(msg) {
+  let t = document.getElementById("toast");
+  if (!t) { t = el("div", { id: "toast", role: "status" }); document.body.append(t); }
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 2600);
+}
+function groupCounts(list, keyFn) {
+  const m = new Map();
+  for (const i of list) { const k = keyFn(i); m.set(k, (m.get(k) || 0) + 1); }
+  return [...m].sort((a, b) => b[1] - a[1]);
+}
+function photoSrc(path) { return localPhotos.get(path) || path; }
+
+// ---------- GitHub storage ----------
+async function gh(path, opts = {}) {
+  const r = await fetch(API + path, { ...opts, headers: {
+    Authorization: "Bearer " + token, Accept: opts.raw ? "application/vnd.github.raw+json" : "application/vnd.github+json",
+    ...(opts.body ? { "Content-Type": "application/json" } : {}) }, cache: "no-store" });
+  if (!r.ok) { const e = new Error("GitHub " + r.status); e.status = r.status; throw e; }
+  if (opts.raw) return r.text();
+  return r.status === 204 ? null : r.json();
+}
+async function readViaAPI(ref) {
+  try { return JSON.parse(await gh(`/contents/data.json?ref=${ref || BRANCH}`, { raw: true })); }
+  catch (e) { if (e.status === 404) return { units: {}, items: [] }; throw e; }
+}
+async function readPublic() {
+  try {
+    const r = await fetch("data.json?t=" + Date.now(), { cache: "no-store" });
+    if (r.ok) return await r.json();
+    if (r.status === 404) return { units: {}, items: [] };
+  } catch {}
+  const r = await fetch(RAW + "data.json?t=" + Date.now(), { cache: "no-store" });
+  if (r.status === 404) return { units: {}, items: [] };
+  if (!r.ok) throw new Error("load failed");
+  return r.json();
+}
+async function load() {
+  try {
+    const d = isOwner ? await readViaAPI() : await readPublic();
+    if (!busy) { data = d; data.units ||= {}; data.items ||= []; }
+    ready = true; failed = false;
+  } catch (e) {
+    if (isOwner && (e.status === 401 || e.status === 403)) { signOutLocal(); toast("Your access token stopped working. Sign in again."); return load(); }
+    if (!ready) failed = true;
+  }
+  render();
+}
+// One commit per change: updates data.json and adds/removes photo files together.
+async function commit(message, mutate, files = [], deletes = []) {
+  busy = true;
+  try {
+    const blobs = [];
+    for (const f of files) {
+      const b = await gh("/git/blobs", { method: "POST", body: JSON.stringify({ content: f.base64, encoding: "base64" }) });
+      blobs.push({ path: f.path, mode: "100644", type: "blob", sha: b.sha });
+    }
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const head = (await gh(`/git/ref/heads/${BRANCH}`)).object.sha;
+      const parent = await gh(`/git/commits/${head}`);
+      const fresh = await readViaAPI(head);
+      fresh.units ||= {}; fresh.items ||= [];
+      mutate(fresh);
+      const tree = [{ path: "data.json", mode: "100644", type: "blob", content: JSON.stringify(fresh, null, 1) }, ...blobs,
+        ...deletes.map(p => ({ path: p, mode: "100644", type: "blob", sha: null }))];
+      const t = await gh("/git/trees", { method: "POST", body: JSON.stringify({ base_tree: parent.tree.sha, tree }) });
+      const c = await gh("/git/commits", { method: "POST", body: JSON.stringify({ message, tree: t.sha, parents: [head] }) });
+      try {
+        await gh(`/git/refs/heads/${BRANCH}`, { method: "PATCH", body: JSON.stringify({ sha: c.sha }) });
+        data = fresh; render(); return;
+      } catch (e) { if (e.status !== 422) throw e; }
+    }
+    throw new Error("Someone else saved at the same time. Try again.");
+  } finally { busy = false; }
+}
+
+// ---------- rendering ----------
+function render() {
+  fab.hidden = !(ready && isOwner && route.view !== "qr");
+  app.replaceChildren();
+  if (failed) { app.append(el("h1", {}, SITE_NAME), el("p", { class: "empty" }, "Couldn’t load the list. Check your connection and reload.")); renderFoot(); return; }
+  if (!ready) { app.append(el("p", { class: "empty" }, "Loading punch list…")); return; }
+  if (route.view === "unit") renderUnit(route.key);
+  else if (route.view === "trade") renderFiltered("trade", route.key);
+  else if (route.view === "who") renderFiltered("who", route.key);
+  else if (route.view === "qr" && isOwner) renderQR();
+  else if (isOwner) renderDashboard();
+  else renderPublicHome();
+  renderFoot();
+}
+function renderFoot() {
+  const f = el("div", { class: "foot noprint" });
+  if (isOwner) f.append(el("span", {}, "Signed in as owner on this device"), el("button", { class: "link", onclick: () => { signOutLocal(); load(); } }, "Sign out"));
+  else f.append(el("button", { class: "link", onclick: openAuth }, "Owner sign in"));
+  app.append(f);
+}
+function rowList(entries, onPick, cls = "") {
+  const ul = el("ul", { class: "rows " + cls });
+  const top = Math.max(1, ...entries.map(e => e[1]));
+  for (const [key, count, label] of entries) {
+    ul.append(el("li", {}, el("button", { onclick: () => onPick(key) },
+      el("span", { class: "n" }, label ?? key),
+      el("span", { class: "bar", "aria-hidden": "true" }, el("i", { style: `width:${Math.round(count / top * 100)}%` })),
+      el("span", { class: "count" }, el("b", {}, String(count)), " open"))));
+  }
+  return ul;
+}
+function renderDashboard() {
+  const open = items().filter(isOpen);
+  const weekAgo = Date.now() - 7 * 864e5;
+  const doneWeek = items().filter(i => i.status === "done" && i.doneAt > weekAgo).length;
+  const unassigned = open.filter(i => !i.assignee).length;
+  app.append(
+    el("div", { class: "top" }, el("span"), el("button", { class: "link", onclick: () => go({ view: "qr" }) }, "Units & QR codes")),
+    el("h1", {}, SITE_NAME),
+    el("div", { class: "stats" },
+      el("div", { class: "stat" }, el("div", { class: "big" }, String(open.length)), el("span", {}, "open items")),
+      el("div", { class: "stat" }, el("div", { class: "big" }, String(doneWeek)), el("span", {}, "done this week")),
+      el("div", { class: "stat" }, el("div", { class: "big" }, String(unassigned)), el("span", {}, "unassigned"))));
+  if (!items().length) { app.append(el("p", { class: "empty" }, allUnits().length ? "No items yet. Tap “Add item” to log the first one." : "Start by adding your units under “Units & QR codes,” then tap “Add item.”")); return; }
+  app.append(el("h2", {}, "By trade"));
+  const byTrade = groupCounts(open, i => i.trade || "General");
+  app.append(byTrade.length ? rowList(byTrade, k => go({ view: "trade", key: k })) : el("p", { class: "empty" }, "Nothing open."));
+  app.append(el("h2", {}, "By person"));
+  const byWho = groupCounts(open, i => i.assignee || "");
+  app.append(byWho.length ? rowList(byWho.map(([k, c]) => [k, c, k || "Unassigned"]), k => go({ view: "who", key: k || "unassigned" })) : el("p", { class: "empty" }, "Nothing open."));
+  app.append(el("h2", {}, "By unit"));
+  app.append(rowList(allUnits().map(u => [u, open.filter(i => i.unit === u).length, unitName(u)]), k => go({ view: "unit", key: k }), "units"));
+}
+function renderPublicHome() {
+  const open = items().filter(isOpen);
+  app.append(el("h1", {}, SITE_NAME), el("p", { class: "sub" }, `${plural(open.length, "open item", "open items")}. Scan the QR code at a unit door to see its list.`));
+  const list = allUnits().map(u => [u, open.filter(i => i.unit === u).length, unitName(u)]);
+  if (list.length) app.append(rowList(list, k => go({ view: "unit", key: k }), "units"));
+}
+function itemCard(it, showUnit) {
+  const card = el("div", { class: "item" + (isOpen(it) ? "" : " done") });
+  card.append(el("div", {},
+    showUnit ? el("div", { class: "where" }, `Unit ${unitName(it.unit)}, ${it.room || "no room"}`) : null,
+    el("h3", {}, it.title || "Untitled"),
+    it.notes ? el("p", {}, it.notes) : null,
+    el("div", { class: "chips" },
+      el("span", { class: "chip" }, it.trade || "General"),
+      el("span", { class: "chip" + (it.assignee ? "" : " none") }, it.assignee || "Unassigned")),
+    el("div", { class: "when" }, isOpen(it) ? `Added ${fmtDate(it.createdAt)}` : `Done ${fmtDate(it.doneAt)}`)));
+  if (it.photo) {
+    const img = el("img", { src: photoSrc(it.thumb || it.photo), alt: "", loading: "lazy" });
+    img.addEventListener("error", function once() { img.removeEventListener("error", once); img.src = RAW + (it.thumb || it.photo) + "?t=" + Date.now(); });
+    card.append(el("button", { class: "thumb", "aria-label": "Open photo", onclick: () => openPhoto(it) }, img));
+  } else card.append(el("span"));
+  if (isOwner) {
+    card.append(el("div", { class: "actions" },
+      isOpen(it) ? el("button", { class: "btn", onclick: e => setStatus(it, "done", e.currentTarget) }, "Mark done")
+                 : el("button", { class: "btn", onclick: e => setStatus(it, "open", e.currentTarget) }, "Reopen"),
+      el("button", { class: "btn", onclick: () => openSheet(it) }, "Edit"),
+      el("button", { class: "btn warn", onclick: e => removeItem(it, e.currentTarget) }, "Delete")));
+  }
+  return card;
+}
+function sharePanel(r) {
+  if (!isOwner) return null;
+  const url = pageURL(r);
+  const input = el("input", { type: "text", value: url, readonly: "", "aria-label": "Link to this page" });
+  return el("div", { class: "sharebox noprint" }, input, el("button", { class: "btn", type: "button", onclick: async () => {
+    try { await navigator.clipboard.writeText(url); toast("Link copied"); } catch { input.select(); toast("Press and hold to copy"); }
+  } }, "Copy link"));
+}
+function backLink() { return el("div", { class: "top" }, el("button", { class: "link", onclick: () => go({ view: "home" }) }, isOwner ? "‹ Dashboard" : "‹ All units")); }
+function renderUnit(u) {
+  const mine = items().filter(i => i.unit === u);
+  const open = mine.filter(isOpen).sort((a, b) => a.createdAt - b.createdAt);
+  const done = mine.filter(i => !isOpen(i)).sort((a, b) => b.doneAt - a.doneAt);
+  app.append(backLink(), el("div", { class: "unitno" }, unitName(u)),
+    el("div", { class: "unitmeta" }, open.length ? plural(open.length, "item to fix", "items to fix") : "Nothing open in this unit"),
+    sharePanel({ view: "unit", key: u }));
+  const rooms = new Map();
+  for (const it of open) { const r = it.room || "Other"; if (!rooms.has(r)) rooms.set(r, []); rooms.get(r).push(it); }
+  for (const [r, list] of [...rooms].sort((a, b) => a[0].localeCompare(b[0]))) {
+    app.append(el("div", { class: "room" }, r)); list.forEach(it => app.append(itemCard(it, false)));
+  }
+  if (!mine.length) app.append(el("p", { class: "empty" }, isOwner ? "Tap “Add item” to log something for this unit." : "No items for this unit."));
+  if (done.length) { const d = el("details", { class: "donebox" }, el("summary", {}, `Done (${done.length})`)); done.forEach(it => d.append(itemCard(it, false))); app.append(d); }
+}
+function renderFiltered(kind, key) {
+  const match = kind === "trade" ? i => (i.trade || "General").toLowerCase() === key.toLowerCase()
+    : i => key === "unassigned" ? !i.assignee : (i.assignee || "").toLowerCase() === key.toLowerCase();
+  const list = items().filter(match);
+  const open = list.filter(isOpen).sort((a, b) => unitName(a.unit).localeCompare(unitName(b.unit), undefined, { numeric: true }) || a.createdAt - b.createdAt);
+  const done = list.filter(i => !isOpen(i)).sort((a, b) => b.doneAt - a.doneAt);
+  app.append(backLink(), el("div", { class: "pagetitle" }, kind === "who" && key === "unassigned" ? "Unassigned" : key),
+    el("div", { class: "unitmeta" }, open.length ? `${plural(open.length, "item", "items")} to fix across ${plural(new Set(open.map(i => i.unit)).size, "unit", "units")}` : "Nothing open"),
+    sharePanel({ view: kind, key }));
+  let last = null;
+  for (const it of open) { if (it.unit !== last) { app.append(el("div", { class: "room" }, `Unit ${unitName(it.unit)}`)); last = it.unit; } app.append(itemCard(it, true)); }
+  if (done.length) { const d = el("details", { class: "donebox" }, el("summary", {}, `Done (${done.length})`)); done.forEach(it => d.append(itemCard(it, true))); app.append(d); }
+}
+function renderQR() {
+  app.append(el("div", { class: "top" }, el("button", { class: "link", onclick: () => go({ view: "home" }) }, "‹ Dashboard"),
+      el("button", { class: "link", onclick: () => window.print() }, "Print")),
+    el("h1", {}, "Units & QR codes"),
+    el("p", { class: "sub" }, "Each code opens that unit’s list. Print and post one at each door."));
+  const input = el("input", { type: "text", placeholder: "Add units: 101, 102, 201-210", "aria-label": "Units to add" });
+  const btn = el("button", { class: "btn primary", type: "button", onclick: async () => {
+    const names = expandUnits(input.value); if (!names.length) return;
+    btn.disabled = true; btn.textContent = "Adding…";
+    try { await commit(`Add units ${names.join(", ")}`, d => names.forEach(n => d.units[slug(n)] = { name: n })); input.value = ""; toast(`Added ${plural(names.length, "unit", "units")}`); }
+    catch (e) { toast(e.message.startsWith("Someone") ? e.message : "Couldn’t add units. Try again."); }
+    finally { btn.disabled = false; btn.textContent = "Add"; }
+  } }, "Add");
+  app.append(el("div", { class: "addunit" }, input, btn));
+  const grid = el("div", { class: "qrgrid" });
+  for (const u of allUnits()) {
+    const box = el("div", { class: "qr" });
+    grid.append(el("div", { class: "qrcard" }, box, el("div", { class: "n" }, unitName(u))));
+    try { new QRCode(box, { text: pageURL({ view: "unit", key: u }), width: 280, height: 280, correctLevel: QRCode.CorrectLevel.M }); } catch {}
+  }
+  app.append(grid);
+}
+function expandUnits(text) {
+  const out = [];
+  for (const part of text.split(/[,\n]+/).map(s => s.trim()).filter(Boolean)) {
+    const m = part.match(/^(\d+)\s*-\s*(\d+)$/);
+    if (m && +m[2] >= +m[1] && +m[2] - +m[1] < 500) for (let n = +m[1]; n <= +m[2]; n++) out.push(String(n));
+    else out.push(part);
+  }
+  return out.filter(n => slug(n));
+}
+
+// ---------- owner actions ----------
+async function setStatus(it, status, btn) {
+  btn.disabled = true; btn.textContent = "Saving…";
+  try {
+    await commit(`${status === "done" ? "Done" : "Reopen"}: ${it.title}`, d => {
+      const x = d.items.find(i => i.id === it.id); if (x) { x.status = status; x.doneAt = status === "done" ? Date.now() : null; }
+    });
+    toast(status === "done" ? "Marked done" : "Reopened");
+  } catch { toast("Couldn’t update that item. Try again."); render(); }
+}
+async function removeItem(it, btn) {
+  if (!btn.dataset.armed) {
+    btn.dataset.armed = "1"; btn.textContent = "Tap again to delete"; btn.classList.add("armed");
+    setTimeout(() => { if (btn.isConnected) { delete btn.dataset.armed; btn.textContent = "Delete"; btn.classList.remove("armed"); } }, 4000);
+    return;
+  }
+  btn.disabled = true; btn.textContent = "Deleting…";
+  try {
+    await commit(`Delete: ${it.title}`, d => { d.items = d.items.filter(i => i.id !== it.id); }, [], it.photo ? [it.photo, it.thumb].filter(Boolean) : []);
+    toast("Item deleted");
+  } catch { toast("Couldn’t delete that item. Try again."); render(); }
+}
+
+// ---------- photo viewer ----------
+const viewer = document.getElementById("viewer"), viewerImg = viewer.querySelector("img");
+function openPhoto(it) {
+  viewerImg.onerror = () => { viewerImg.onerror = null; viewerImg.src = RAW + it.photo + "?t=" + Date.now(); };
+  viewerImg.src = photoSrc(it.photo); viewer.classList.add("open");
+}
+viewer.addEventListener("click", () => viewer.classList.remove("open"));
+
+// ---------- sign in ----------
+const $ = id => document.getElementById(id);
+function openAuth() { $("authSheet").reset(); $("aErr").hidden = true; $("authSheet").classList.add("open"); $("authBg").classList.add("open"); }
+function closeAuth() { $("authSheet").classList.remove("open"); $("authBg").classList.remove("open"); }
+$("authBg").addEventListener("click", closeAuth);
+$("aCancel").addEventListener("click", closeAuth);
+$("authSheet").addEventListener("submit", async e => {
+  e.preventDefault();
+  const t = $("aTok").value.trim(); if (!t) return;
+  $("aSave").disabled = true; $("aSave").textContent = "Checking…";
+  try {
+    const r = await fetch(API, { headers: { Authorization: "Bearer " + t, Accept: "application/vnd.github+json" } });
+    if (!r.ok) throw new Error();
+    const info = await r.json();
+    if (info.permissions && !info.permissions.push) throw new Error();
+    token = t; isOwner = true;
+    try { localStorage.setItem("pl_token", t); } catch {}
+    closeAuth(); toast("Signed in"); ready = false; render(); load();
+  } catch { $("aErr").textContent = "That token didn’t work. Check that it has Contents read and write access to this repository."; $("aErr").hidden = false; }
+  finally { $("aSave").disabled = false; $("aSave").textContent = "Sign in"; }
+});
+function signOutLocal() { token = null; isOwner = false; try { localStorage.removeItem("pl_token"); } catch {} render(); }
+
+// ---------- add / edit sheet ----------
+const sheet = $("sheet"), sheetBg = $("sheetBg");
+$("fTrade").append(...TRADES.map(t => el("option", { value: t }, t)));
+$("rooms").append(...ROOMS.map(r => el("option", { value: r })));
+let photo = null, editing = null;
+function openSheet(it = null) {
+  editing = it; photo = null; sheet.reset();
+  $("sheetTitle").textContent = it ? "Edit item" : "New punch item";
+  $("fSave").textContent = it ? "Save changes" : "Save item";
+  $("fErr").hidden = true;
+  $("people").replaceChildren(...[...new Set(items().map(i => i.assignee).filter(Boolean))].sort().map(p => el("option", { value: p })));
+  if (it) {
+    $("fUnit").value = unitName(it.unit); $("fRoom").value = it.room || ""; $("fTitle").value = it.title || "";
+    $("fNotes").value = it.notes || ""; $("fTrade").value = it.trade || "General"; $("fWho").value = it.assignee || "";
+  } else {
+    if (route.view === "unit") $("fUnit").value = unitName(route.key);
+    if (route.view === "trade") $("fTrade").value = TRADES.find(t => t.toLowerCase() === route.key.toLowerCase()) || "General";
+    if (route.view === "who" && route.key !== "unassigned") $("fWho").value = route.key;
+  }
+  const hasPic = !!(it && it.photo);
+  $("fPreview").hidden = !hasPic; if (hasPic) $("fPreview").src = photoSrc(it.thumb || it.photo);
+  $("fPhotoText").textContent = hasPic ? "Tap to replace photo" : "Take or choose a photo";
+  sheet.classList.add("open"); sheetBg.classList.add("open");
+}
+function closeSheet() { sheet.classList.remove("open"); sheetBg.classList.remove("open"); }
+fab.addEventListener("click", () => openSheet());
+sheetBg.addEventListener("click", closeSheet);
+$("fCancel").addEventListener("click", closeSheet);
+
+async function resize(file, max, q) {
+  const bmp = await createImageBitmap(file);
+  const k = Math.min(1, max / Math.max(bmp.width, bmp.height));
+  const c = document.createElement("canvas");
+  c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+  c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+  return c.toDataURL("image/jpeg", q);
+}
+$("fPhoto").addEventListener("change", async () => {
+  const f = $("fPhoto").files[0]; if (!f) return;
+  $("fPhotoText").textContent = "Preparing photo…";
+  try {
+    photo = { full: await resize(f, 1600, 0.78), thumb: await resize(f, 240, 0.65) };
+    $("fPreview").src = photo.thumb; $("fPreview").hidden = false; $("fPhotoText").textContent = "Tap to retake";
+  } catch { photo = null; $("fPhotoText").textContent = "Couldn’t read that photo. Try another."; }
+});
+sheet.addEventListener("submit", async e => {
+  e.preventDefault();
+  const name = $("fUnit").value.trim(), u = slug(name);
+  if (!u) return;
+  const btn = $("fSave"); btn.disabled = true; const label = btn.textContent; btn.textContent = "Saving…"; $("fErr").hidden = true;
+  try {
+    const id = editing ? editing.id : newId();
+    const fields = { unit: u, unitName: name, room: $("fRoom").value.trim(), title: $("fTitle").value.trim(),
+      notes: $("fNotes").value.trim(), trade: $("fTrade").value, assignee: $("fWho").value.trim() };
+    const files = [], deletes = [];
+    if (photo) {
+      const stamp = Date.now().toString(36);
+      fields.photo = `photos/${id}-${stamp}.jpg`; fields.thumb = `photos/${id}-${stamp}-t.jpg`;
+      files.push({ path: fields.photo, base64: photo.full.split(",")[1] }, { path: fields.thumb, base64: photo.thumb.split(",")[1] });
+      localPhotos.set(fields.photo, photo.full); localPhotos.set(fields.thumb, photo.thumb);
+      if (editing && editing.photo) deletes.push(editing.photo, editing.thumb);
+    }
+    await commit(`${editing ? "Edit" : "Add"}: unit ${name}, ${fields.title}`, d => {
+      if (!d.units[u]) d.units[u] = { name };
+      if (editing) { const x = d.items.find(i => i.id === id); if (x) Object.assign(x, fields); }
+      else d.items.push({ id, ...fields, photo: fields.photo || null, thumb: fields.thumb || null, status: "open", createdAt: Date.now(), doneAt: null });
+    }, files, deletes.filter(Boolean));
+    closeSheet(); toast(editing ? "Changes saved" : "Item added");
+    if (!editing && route.view !== "trade" && route.view !== "who" && !(route.view === "unit" && route.key === u)) go({ view: "unit", key: u });
+  } catch (err) {
+    $("fErr").textContent = err.status === 401 || err.status === 403 ? "Your access token can’t save. Sign out and sign in with a token that has Contents read and write." : (err.message.startsWith("Someone") ? err.message : "Couldn’t save. Check your connection and try again.");
+    $("fErr").hidden = false;
+  } finally { btn.disabled = false; btn.textContent = label; }
+});
+
+// ---------- boot ----------
+render();
+load();
+setInterval(() => { if (!document.hidden && !busy && !document.querySelector(".sheet.open")) load(); }, 60000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden && !busy) load(); });
+</script>
+</body>
+</html>
