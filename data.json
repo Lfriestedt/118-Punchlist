@@ -149,6 +149,30 @@
    "w": 3200,
    "h": 2473,
    "importedAt": 1792561173648
+  },
+  "PL-601": {
+   "file": "drawings/PL-601-mvhon32g.jpg",
+   "w": 3200,
+   "h": 2473,
+   "importedAt": 1792561180308
+  },
+  "PL-602": {
+   "file": "drawings/PL-602-mvhon36b.jpg",
+   "w": 3200,
+   "h": 2473,
+   "importedAt": 1792561180308
+  },
+  "PL-603": {
+   "file": "drawings/PL-603-mvhon39o.jpg",
+   "w": 3200,
+   "h": 2473,
+   "importedAt": 1792561180308
+  },
+  "PL-604": {
+   "file": "drawings/PL-604-mvhon3cx.jpg",
+   "w": 3200,
+   "h": 2473,
+   "importedAt": 1792561180308
   }
  },
  "procore": {
