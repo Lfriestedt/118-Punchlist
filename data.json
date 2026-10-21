@@ -53,6 +53,30 @@
    "w": 3200,
    "h": 2473,
    "importedAt": 1792561145184
+  },
+  "PL-303": {
+   "file": "drawings/PL-303-mvhomh25.jpg",
+   "w": 3200,
+   "h": 2473,
+   "importedAt": 1792561153845
+  },
+  "PL-304": {
+   "file": "drawings/PL-304-mvhomh61.jpg",
+   "w": 3200,
+   "h": 2473,
+   "importedAt": 1792561153845
+  },
+  "PL-305": {
+   "file": "drawings/PL-305-mvhomha9.jpg",
+   "w": 3200,
+   "h": 2473,
+   "importedAt": 1792561153845
+  },
+  "PL-306": {
+   "file": "drawings/PL-306-mvhomhem.jpg",
+   "w": 3200,
+   "h": 2473,
+   "importedAt": 1792561153845
   }
  },
  "procore": {
