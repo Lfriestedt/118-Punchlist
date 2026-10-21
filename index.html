@@ -12,7 +12,7 @@
 <style>
 :root {
   --bg: #EEF0F2; --surface: #FFFFFF; --ink: #18202B; --muted: #5B6675; --line: #D3D8DE;
-  --tape: #F2C230; --tape-ink: #2A2100; --done: #2F7D4F; --danger: #B3261E;
+  --tape: #F2C230; --tape-ink: #2A2100; --done: #2F7D4F; --danger: #B3261E; --pc: #E2541B;
   color-scheme: light;
   box-sizing: border-box;
   padding-top: env(safe-area-inset-top, 0px);
@@ -21,7 +21,7 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #12161C; --surface: #1C222B; --ink: #E9EDF2; --muted: #9AA5B3; --line: #2E3642;
-    --tape: #E8B923; --tape-ink: #1E1700; --done: #5FBF84; --danger: #F2847C;
+    --tape: #E8B923; --tape-ink: #1E1700; --done: #5FBF84; --danger: #F2847C; --pc: #F2763F;
     color-scheme: dark;
   }
 }
@@ -132,6 +132,69 @@ textarea { min-height: 72px; resize: vertical; }
 .addunit input { flex: 1; }
 .sharebox { display: flex; gap: 8px; margin: 4px 0 8px; }
 .sharebox input { flex: 1; font-size: 14px; }
+
+/* ---------- mode tabs + Procore section ---------- */
+.modetabs { display: flex; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 3px; gap: 3px; margin: 4px 0 8px; }
+.modetabs button { flex: 1; border: 0; background: none; padding: 9px 10px; border-radius: 6px; font-weight: 600; color: var(--muted); }
+.modetabs button.on { background: var(--ink); color: var(--bg); }
+.choose { display: grid; gap: 14px; margin-top: 18px; }
+.choose button { text-align: left; background: var(--surface); border: 1px solid var(--line); border-left: 8px solid var(--tape); border-radius: 6px; padding: 20px 18px; }
+.choose button.pc { border-left-color: var(--pc); }
+.choose .t { font-family: "Barlow Condensed", "Arial Narrow", sans-serif; font-weight: 800; font-size: 34px; line-height: 1; display: block; }
+.choose .d { color: var(--muted); font-size: 15px; display: block; margin-top: 6px; }
+.pcnav { display: flex; gap: 4px; overflow-x: auto; border-bottom: 1px solid var(--line); margin: 6px 0 14px; scrollbar-width: none; }
+.pcnav button { background: none; border: 0; border-bottom: 3px solid transparent; padding: 10px 12px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+.pcnav button.on { color: var(--ink); border-bottom-color: var(--pc); }
+.pchead { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.pchead .proj { font-size: 14px; color: var(--muted); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; background: var(--surface); border-radius: 6px; padding: 14px; margin: 10px 0; font-size: 15px; }
+.kv dt { color: var(--muted); } .kv dd { margin: 0; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin: 12px 0; }
+.tile { background: var(--surface); border-radius: 6px; padding: 12px 14px; border: 1px solid var(--line); text-align: left; }
+.tile .big { font-family: "Barlow Condensed", "Arial Narrow", sans-serif; font-size: 40px; font-weight: 800; line-height: 1; }
+.tile span { color: var(--muted); font-size: 14px; }
+.transfer { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 14px; margin: 12px 0; }
+.transfer .btn.primary { width: 100%; padding: 14px; font-size: 18px; }
+.transfer p { margin: 8px 0 0; color: var(--muted); font-size: 14px; }
+.filters { display: flex; gap: 8px; flex-wrap: wrap; margin: 6px 0 12px; }
+.filters input, .filters select { width: auto; flex: 1 1 140px; padding: 9px 10px; }
+.sheetrow { width: 100%; display: grid; grid-template-columns: 92px 1fr auto; gap: 10px; align-items: center; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 11px 4px; text-align: left; }
+.sheetrow .no { font-weight: 600; }
+.sheetrow .meta { color: var(--muted); font-size: 13px; white-space: nowrap; text-align: right; }
+.disc { margin: 22px 0 4px; font-weight: 600; font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.badge { display: inline-block; min-width: 20px; padding: 0 6px; border-radius: 999px; background: var(--pc); color: #fff; font-size: 12px; font-weight: 600; text-align: center; }
+.badge.gray { background: var(--line); color: var(--ink); }
+.status { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; text-transform: uppercase; letter-spacing: .03em; }
+.status.open { background: var(--tape); color: var(--tape-ink); }
+.status.closed { background: var(--done); color: #fff; }
+.pcitem { background: var(--surface); border-left: 6px solid var(--pc); border-radius: 4px; padding: 12px 14px; margin: 10px 0; display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+.pcitem.closed { border-left-color: var(--done); opacity: .8; }
+.pcitem h3 { margin: 2px 0; font-size: 18px; font-weight: 600; }
+.pcitem .num { font-size: 13px; color: var(--muted); display: flex; gap: 8px; align-items: center; }
+.pcitem .loc { font-size: 14px; color: var(--muted); }
+.pz-wrap { position: relative; margin: 0 -16px; }
+.pz { position: relative; height: calc(100vh - 250px); height: calc(100dvh - 250px); min-height: 360px; overflow: hidden; background: #DDE1E6; touch-action: none; user-select: none; -webkit-user-select: none; cursor: grab; }
+@media (prefers-color-scheme: dark) { .pz { background: #0B0E12; } }
+.pz-inner { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.pz-inner img, .pz-ph { width: 100%; height: 100%; display: block; pointer-events: none; }
+.pz-ph { background: #fff; color: #5B6675; display: grid; place-items: center; text-align: center; font-size: 34px; background-image: linear-gradient(#e6e9ed 1px, transparent 1px), linear-gradient(90deg, #e6e9ed 1px, transparent 1px); background-size: 50px 50px; }
+.pin { position: absolute; width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 50%; background: var(--tape); color: var(--tape-ink); border: 2px solid #000; font: 600 12px/26px "Barlow", sans-serif; text-align: center; transform: scale(var(--inv, 1)); box-shadow: 0 2px 6px rgba(0,0,0,.35); }
+.pin.closed { background: var(--done); color: #fff; }
+.pin.sel { outline: 4px solid var(--pc); outline-offset: 2px; }
+.pztools { position: absolute; right: 10px; top: 10px; display: flex; flex-direction: column; gap: 6px; z-index: 2; }
+.pztools button { width: 42px; height: 42px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); font-size: 20px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,.15); }
+.placing { position: absolute; left: 10px; right: 64px; top: 10px; z-index: 2; background: var(--pc); color: #fff; border-radius: 6px; padding: 10px 12px; font-weight: 500; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.placing button { background: #fff; color: #000; border: 0; border-radius: 4px; padding: 6px 10px; font-weight: 600; }
+.placing[hidden] { display: none; }
+.pz.placing-mode { cursor: crosshair; }
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 6px; }
+.gallery button { position: relative; aspect-ratio: 1; border: 0; padding: 0; border-radius: 3px; overflow: hidden; background: var(--line); }
+.gallery img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.gallery .cap { position: absolute; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.6); color: #fff; font-size: 11px; padding: 2px 5px; text-align: left; }
+.person { padding: 10px 2px; border-bottom: 1px solid var(--line); }
+.person b { font-weight: 600; } .person div { color: var(--muted); font-size: 14px; }
+.person a { color: var(--ink); }
+.progress { font-size: 14px; color: var(--muted); margin-top: 8px; }
 @media print { .top, .fab, .addunit, .sub, .foot, .noprint { display: none !important; } body { background: #fff; } }
 </style>
 </head>
@@ -240,6 +303,9 @@ textarea { min-height: 72px; resize: vertical; }
     <button type="submit" class="btn primary" id="aSave">Sign in</button>
   </div>
 </form>
+<div class="sheet-bg" id="pinBg"></div>
+<div class="sheet" id="pinSheet" role="dialog" aria-label="Punch item"></div>
+<input type="file" id="dwgFiles" accept="image/*,application/pdf,.pdf" multiple hidden>
 <div class="viewer" id="viewer"><img alt="Punch item photo"><video controls playsinline hidden></video></div>
 
 <script>
@@ -301,9 +367,13 @@ function parseHash() {
   if (p[0] === "trade" && p[1]) return { view: "trade", key: p[1] };
   if (p[0] === "who" && p[1]) return { view: "who", key: p[1] };
   if (p[0] === "qr") return { view: "qr" };
+  if (p[0] === "punch") return { view: "dash" };
+  if (p[0] === "pc") return { view: "pc", sub: p[1] || "home", key: p[2] || null, focus: p[3] || null };
   return { view: "home" };
 }
-const link = r => r.view === "home" ? "#/" : r.key ? `#/${r.view}/${encodeURIComponent(r.key)}` : `#/${r.view}`;
+const link = r => r.view === "home" ? "#/" : r.view === "dash" ? "#/punch"
+  : r.view === "pc" ? "#/pc" + (r.sub && r.sub !== "home" ? "/" + r.sub : "") + (r.key ? "/" + encodeURIComponent(r.key) : "") + (r.focus ? "/" + encodeURIComponent(r.focus) : "")
+  : r.key ? `#/${r.view}/${encodeURIComponent(r.key)}` : `#/${r.view}`;
 function go(r) { if (location.hash !== link(r)) location.hash = link(r); else { route = r; render(); } }
 window.addEventListener("hashchange", () => { route = parseHash(); window.scrollTo(0, 0); render(); });
 const pageURL = r => location.origin + location.pathname + link(r);
@@ -367,8 +437,11 @@ async function readPublic() {
 async function load() {
   try {
     const d = isOwner ? await readViaAPI() : await readPublic();
-    if (!busy) { data = d; data.units ||= {}; data.items ||= []; }
+    const was = ready ? JSON.stringify(data) : null;
+    if (!busy) { data = ensureData(d); }
+    const same = was !== null && was === JSON.stringify(data);
     ready = true; failed = false;
+    if (same) return;
   } catch (e) {
     if (isOwner && (e.status === 401 || e.status === 403)) { signOutLocal(); toast("Your access token stopped working. Sign in again."); return load(); }
     if (!ready) failed = true;
@@ -388,7 +461,7 @@ async function commit(message, mutate, files = [], deletes = []) {
       const head = (await gh(`/git/ref/heads/${BRANCH}`)).object.sha;
       const parent = await gh(`/git/commits/${head}`);
       const fresh = await readViaAPI(head);
-      fresh.units ||= {}; fresh.items ||= [];
+      ensureData(fresh);
       mutate(fresh);
       const tree = [{ path: "data.json", mode: "100644", type: "blob", content: JSON.stringify(fresh, null, 1) }, ...blobs,
         ...deletes.map(p => ({ path: p, mode: "100644", type: "blob", sha: null }))];
@@ -404,8 +477,13 @@ async function commit(message, mutate, files = [], deletes = []) {
 }
 
 // ---------- rendering ----------
+function ensureData(d) {
+  d.units ||= {}; d.items ||= []; d.drawingFiles ||= {};
+  d.procore ||= {}; d.procore.items ||= {}; d.procore.roomPins ||= {}; d.procore.nextNumber ||= 1;
+  return d;
+}
 function render() {
-  fab.hidden = !(ready && isOwner && route.view !== "qr");
+  fab.hidden = !(ready && isOwner && !["qr", "pc", "home"].includes(route.view));
   app.replaceChildren();
   if (failed) { app.append(el("h1", {}, SITE_NAME), el("p", { class: "empty" }, "Couldn’t load the list. Check your connection and reload.")); renderFoot(); return; }
   if (!ready) { app.append(el("p", { class: "empty" }, "Loading punch list…")); return; }
@@ -413,7 +491,9 @@ function render() {
   else if (route.view === "trade") renderFiltered("trade", route.key);
   else if (route.view === "who") renderFiltered("who", route.key);
   else if (route.view === "qr" && isOwner) renderQR();
-  else if (isOwner) renderDashboard();
+  else if (route.view === "pc" && isOwner) renderPC();
+  else if (route.view === "dash" && isOwner) renderDashboard();
+  else if (isOwner) renderChooser();
   else renderPublicHome();
   renderFoot();
 }
@@ -441,6 +521,7 @@ function renderDashboard() {
   const doneWeek = items().filter(i => i.status === "done" && i.doneAt > weekAgo).length;
   const unassigned = open.filter(i => !i.assignee).length;
   app.append(
+    modeTabs("punch"),
     el("div", { class: "top" }, el("span"), el("button", { class: "link", onclick: () => go({ view: "qr" }) }, "Units & QR codes")),
     el("h1", {}, SITE_NAME),
     el("div", { class: "stats" },
@@ -495,7 +576,7 @@ function sharePanel(r) {
     try { await navigator.clipboard.writeText(url); toast("Link copied"); } catch { input.select(); toast("Press and hold to copy"); }
   } }, "Copy link"));
 }
-function backLink() { return el("div", { class: "top" }, el("button", { class: "link", onclick: () => go({ view: "home" }) }, isOwner ? "‹ Dashboard" : "‹ All units")); }
+function backLink() { return el("div", { class: "top" }, el("button", { class: "link", onclick: () => go({ view: isOwner ? "dash" : "home" }) }, isOwner ? "‹ Dashboard" : "‹ All units")); }
 function renderUnit(u) {
   const mine = items().filter(i => i.unit === u);
   const open = mine.filter(isOpen).sort((a, b) => a.createdAt - b.createdAt);
@@ -525,7 +606,7 @@ function renderFiltered(kind, key) {
   if (done.length) { const d = el("details", { class: "donebox" }, el("summary", {}, `Done (${done.length})`)); done.forEach(it => d.append(itemCard(it, true))); app.append(d); }
 }
 function renderQR() {
-  app.append(el("div", { class: "top" }, el("button", { class: "link", onclick: () => go({ view: "home" }) }, "‹ Dashboard"),
+  app.append(el("div", { class: "top" }, el("button", { class: "link", onclick: () => go({ view: "dash" }) }, "‹ Dashboard"),
       el("button", { class: "link", onclick: () => window.print() }, "Print")),
     el("h1", {}, "Units & QR codes"),
     el("p", { class: "sub" }, "Each code opens that unit’s list. Print and post one at each door."));
@@ -574,7 +655,7 @@ async function removeItem(it, btn) {
   }
   btn.disabled = true; btn.textContent = "Deleting…";
   try {
-    await commit(`Delete: ${it.title}`, d => { d.items = d.items.filter(i => i.id !== it.id); }, [], [it.photo, it.thumb, it.video].filter(Boolean));
+    await commit(`Delete: ${it.title}`, d => { d.items = d.items.filter(i => i.id !== it.id); }, [], data.procore?.items?.[it.id] ? [] : [it.photo, it.thumb, it.video].filter(Boolean));
     toast("Item deleted");
   } catch { toast("Couldn’t delete that item. Try again."); render(); }
 }
@@ -697,7 +778,7 @@ sheet.addEventListener("submit", async e => {
       fields.photo = `photos/${id}-${stamp}.jpg`; fields.thumb = `photos/${id}-${stamp}-t.jpg`;
       files.push({ path: fields.photo, base64: photo.full.split(",")[1] }, { path: fields.thumb, base64: photo.thumb.split(",")[1] });
       localPhotos.set(fields.photo, photo.full); localPhotos.set(fields.thumb, photo.thumb);
-      if (editing && editing.photo) deletes.push(editing.photo, editing.thumb);
+      if (editing && editing.photo && !data.procore?.items?.[editing.id]) deletes.push(editing.photo, editing.thumb);
     }
     await commit(`${editing ? "Edit" : "Add"}: unit ${name}, ${fields.title}`, d => {
       if (!d.units[u]) d.units[u] = { name };
@@ -715,6 +796,7 @@ sheet.addEventListener("submit", async e => {
 // ---------- Procore project data (units & rooms) ----------
 // Reads 118IL-boyleston-lofts.json (exported from Procore) so unit and room pickers match the real building.
 const PROJECT_FILE = "118IL-boyleston-lofts.json";
+let projectData = null;
 let projectUnits = null;          // Map: unit number -> { label, floor, rooms: [] }
 let projectLoading = null;
 function loadProject() {
@@ -730,7 +812,7 @@ function loadProject() {
       const room = parts.slice(ui + 1).join(" › ");
       if (room && !m.get(num).rooms.includes(room)) m.get(num).rooms.push(room);
     }
-    projectUnits = m;
+    projectUnits = m; projectData = p;
     fillUnitList();
     return m;
   }).catch(() => (projectUnits = new Map()));
@@ -945,6 +1027,407 @@ kSheet.addEventListener("submit", e => {
   if (!/^sk-ant-/.test(k)) { $("kErr").textContent = "That doesn’t look like an Anthropic API key (starts with sk-ant-)."; $("kErr").hidden = false; return; }
   aiKey = k; try { localStorage.setItem("pl_ai_key", k); } catch {} closeKey(); toast("Claude auto-fill on"); render();
 });
+
+// ================= PROCORE SECTION (owner only) =================
+// A mirror of the Procore project: drawings, punch items pinned on the PUNCHLIST sheets, photos, directory.
+// "Transfer" copies open punch list items into it and pins each one on its unit's sheet (PL-<unit>).
+const pc = () => data.procore;
+const pcItems = () => Object.values(pc().items || {});
+const sheetForUnit = u => { const n = "PL-" + unitKeyFromText(u); return (projectData?.drawings || []).some(d => d.number === n) ? n : null; };
+const drawingFile = n => data.drawingFiles?.[n] || null;
+function locationText(it) {
+  const pu = projectUnits?.get(unitKeyFromText(it.unitName || it.unit));
+  return [pu?.floor, pu?.label || `Unit ${it.unitName || it.unit}`, it.room].filter(Boolean).join(" › ");
+}
+
+function modeTabs(on) {
+  return el("div", { class: "modetabs noprint", role: "tablist" },
+    el("button", { class: on === "punch" ? "on" : "", role: "tab", "aria-selected": String(on === "punch"), onclick: () => go({ view: "dash" }) }, "Punch List"),
+    el("button", { class: on === "pc" ? "on" : "", role: "tab", "aria-selected": String(on === "pc"), onclick: () => go({ view: "pc" }) }, "Procore"));
+}
+function renderChooser() {
+  const open = items().filter(isOpen).length, pcOpen = pcItems().filter(i => i.status === "open").length;
+  app.append(el("h1", {}, SITE_NAME), el("p", { class: "sub" }, "Choose where to work."),
+    el("div", { class: "choose" },
+      el("button", { onclick: () => go({ view: "dash" }) }, el("span", { class: "t" }, "Punch List"), el("span", { class: "d" }, `${plural(open, "open item", "open items")} · capture and track`)),
+      el("button", { class: "pc", onclick: () => go({ view: "pc" }) }, el("span", { class: "t" }, "Procore"), el("span", { class: "d" }, `118IL Boyleston Lofts · ${plural(pcOpen, "open item", "open items")} on drawings`))));
+}
+
+function renderPC() {
+  if (!projectData) { app.append(modeTabs("pc"), el("p", { class: "empty" }, "Loading project…")); loadProject().then(() => { if (route.view === "pc") render(); }); return; }
+  const sub = route.sub || "home";
+  const tabs = [["home", "Home"], ["drawings", "Drawings"], ["punch", "Punch List"], ["photos", "Photos"], ["directory", "Directory"]];
+  app.append(modeTabs("pc"),
+    el("div", { class: "pchead" }, el("span", { class: "proj" }, projectData.project.display_name)),
+    el("nav", { class: "pcnav noprint" }, ...tabs.map(([k, l]) => el("button", { class: (sub === k || (sub === "sheet" && k === "drawings")) ? "on" : "", onclick: () => go({ view: "pc", sub: k }) }, l))));
+  if (sub === "drawings") pcDrawings();
+  else if (sub === "sheet") pcSheet(route.key, route.focus);
+  else if (sub === "punch") pcPunch();
+  else if (sub === "photos") pcPhotos();
+  else if (sub === "directory") pcDirectory();
+  else pcHome();
+}
+
+// ---------- home + transfer ----------
+function pcHome() {
+  const p = projectData.project, all = pcItems(), open = all.filter(i => i.status === "open");
+  const needPin = open.filter(i => !i.pin).length, last = pc().lastTransfer;
+  const plSheets = (projectData.drawings || []).filter(d => d.discipline === "PUNCHLIST");
+  const imported = plSheets.filter(d => drawingFile(d.number)).length;
+  const pending = items().filter(isOpen).filter(i => { const x = pc().items[i.id]; return !x || x.updatedFrom !== stampOf(i); }).length;
+  app.append(el("h1", {}, p.name),
+    el("dl", { class: "kv" },
+      el("dt", {}, "Project"), el("dd", {}, `${p.number} · ${p.stage || ""}`),
+      el("dt", {}, "Address"), el("dd", {}, `${p.address}, ${p.city}, ${p.state} ${p.zip}`),
+      el("dt", {}, "Scope"), el("dd", {}, p.description),
+      el("dt", {}, "Team"), el("dd", {}, projectData.project_roles.map(r => `${r.role}: ${r.name.replace(/\s*\(.*\)/, "")}`).join(" · "))),
+    el("div", { class: "transfer" },
+      el("button", { class: "btn primary", type: "button", onclick: e => transferAll(e.currentTarget) }, "Transfer / update open items"),
+      el("p", {}, pending ? `${plural(pending, "punch list item", "punch list items")} not yet in Procore or changed since the last transfer.` : "Everything open on the punch list is up to date here."),
+      last ? el("p", {}, `Last transfer ${new Date(last.at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}: ${last.added} new, ${last.updated} updated, ${last.closed} closed.`) : null),
+    el("div", { class: "tiles" },
+      tile(open.length, "open items", () => go({ view: "pc", sub: "punch" })),
+      tile(needPin, "need a pin", () => go({ view: "pc", sub: "punch" })),
+      tile(all.filter(i => i.status === "closed").length, "closed", () => go({ view: "pc", sub: "punch" })),
+      tile(`${imported}/${plSheets.length}`, "punchlist sheets imported", () => go({ view: "pc", sub: "drawings" }))));
+}
+function tile(n, label, onclick) { return el("button", { class: "tile", type: "button", onclick }, el("div", { class: "big" }, String(n)), el("span", {}, label)); }
+const stampOf = it => [it.title, it.notes, it.trade, it.assignee, it.room, it.unit, it.photo, it.status].join("|");
+
+async function transferAll(btn) {
+  btn.disabled = true; btn.textContent = "Transferring…";
+  await loadProject();
+  let summary = null;
+  try {
+    await commit("Transfer punch list to Procore", d => {
+      const P = d.procore, now = Date.now(); let added = 0, updated = 0, closed = 0;
+      const live = new Set();
+      for (const it of d.items) {
+        live.add(it.id);
+        const ex = P.items[it.id], snap = {
+          unit: it.unit, unitName: it.unitName || it.unit, room: it.room || "", title: it.title, notes: it.notes || "", trade: it.trade || "General",
+          assignee: it.assignee || "", photo: it.photo || null, thumb: it.thumb || null, video: it.video || null, createdAt: it.createdAt,
+          location: locationText(it), sheet: sheetForUnit(it.unitName || it.unit), updatedFrom: stampOf(it) };
+        if (isOpen(it)) {
+          if (!ex) { P.items[it.id] = { id: it.id, number: P.nextNumber++, ...snap, status: "open", pin: autoPin(P, snap), transferredAt: now, updatedAt: now }; added++; }
+          else if (ex.updatedFrom !== snap.updatedFrom || ex.status !== "open") {
+            const moved = ex.sheet !== snap.sheet || ex.room !== snap.room;
+            Object.assign(ex, snap, { status: "open", updatedAt: now, closedAt: null });
+            if (moved || !ex.pin) ex.pin = autoPin(P, snap, ex.id);
+            updated++;
+          }
+        } else if (ex && ex.status !== "closed") { Object.assign(ex, snap, { status: "closed", closedAt: it.doneAt || now, updatedAt: now }); closed++; }
+      }
+      for (const ex of Object.values(P.items)) if (!live.has(ex.id) && ex.status !== "closed") { ex.status = "closed"; ex.removed = true; ex.closedAt = now; closed++; }
+      P.lastTransfer = summary = { at: now, added, updated, closed };
+    });
+    toast(`Transferred: ${summary.added} new, ${summary.updated} updated, ${summary.closed} closed`);
+  } catch (e) { toast(e.message?.startsWith("Someone") ? e.message : "Transfer didn’t finish. Try again."); render(); }
+}
+// Reuse a pin location learned for the same room in this unit, or the same room in the same unit stack (202, 302, 402…).
+function autoPin(P, snap, selfId) {
+  if (!snap.sheet || !snap.room) return null;
+  const u = unitKeyFromText(snap.unitName), base = P.roomPins[`${u}|${snap.room}`] || P.roomPins[`stack:${u.slice(-1)}|${snap.room}`];
+  if (!base) return null;
+  const near = Object.values(P.items).filter(i => i.id !== selfId && i.pin && i.pin.sheet === snap.sheet && Math.hypot(i.pin.x - base.x, i.pin.y - base.y) < 0.05).length;
+  return { sheet: snap.sheet, x: Math.min(.98, base.x + near * 0.018), y: Math.min(.98, base.y + near * 0.012), auto: true };
+}
+
+// ---------- drawings list + import ----------
+function pcDrawings() {
+  const all = projectData.drawings || [];
+  const q = el("input", { type: "search", placeholder: "Search sheets", "aria-label": "Search sheets" });
+  const list = el("div");
+  const counts = {}; for (const i of pcItems()) if (i.pin && i.status === "open") counts[i.pin.sheet] = (counts[i.pin.sheet] || 0) + 1;
+  const prog = el("div", { class: "progress", role: "status" });
+  const draw = () => {
+    const t = q.value.trim().toLowerCase();
+    const shown = all.filter(d => !t || `${d.number} ${d.title} ${d.discipline}`.toLowerCase().includes(t));
+    const groups = new Map(); for (const d of shown) { const g = d.discipline || "Other"; if (!groups.has(g)) groups.set(g, []); groups.get(g).push(d); }
+    const order = [...groups.keys()].sort((a, b) => (b === "PUNCHLIST") - (a === "PUNCHLIST") || a.localeCompare(b));
+    list.replaceChildren(...order.flatMap(g => [el("div", { class: "disc" }, g === "PUNCHLIST" ? "Punchlist" : g),
+      ...groups.get(g).map(d => el("button", { class: "sheetrow", type: "button", onclick: () => go({ view: "pc", sub: "sheet", key: d.number }) },
+        el("span", { class: "no" }, d.number),
+        el("span", {}, d.title),
+        el("span", { class: "meta" }, counts[d.number] ? el("span", { class: "badge" }, String(counts[d.number])) : null, " ",
+          drawingFile(d.number) ? "" : el("span", { class: "badge gray", title: "Drawing file not imported" }, "no file"))))]));
+    if (!shown.length) list.replaceChildren(el("p", { class: "empty" }, "No sheets match."));
+  };
+  q.addEventListener("input", draw);
+  app.append(el("div", { class: "filters" }, q,
+      el("button", { class: "btn", type: "button", onclick: () => { dwgTarget = null; $("dwgFiles").value = ""; $("dwgFiles").click(); } }, "Import drawing files")),
+    el("p", { class: "sub", style: "margin:0" }, "Download sheets from Procore as PDF or PNG, then import them here. Files are matched to sheets by number in the file name, like “PL-202”."),
+    prog, list);
+  dwgProgress = prog;
+  draw();
+}
+let dwgTarget = null, dwgProgress = null;
+$("dwgFiles").addEventListener("change", () => importDrawings([...$("dwgFiles").files], dwgTarget));
+let pdfjsReady = null;
+function loadPdfJs() {
+  if (pdfjsReady) return pdfjsReady;
+  pdfjsReady = new Promise((res, rej) => {
+    const sc = document.createElement("script");
+    sc.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+    sc.onload = () => { window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"; res(window.pdfjsLib); };
+    sc.onerror = () => { pdfjsReady = null; rej(new Error("pdf.js")); };
+    document.head.append(sc);
+  });
+  return pdfjsReady;
+}
+async function renderDrawing(file) {
+  const MAX = 3200;
+  if (file.type === "application/pdf" || /\.pdf$/i.test(file.name)) {
+    const lib = await loadPdfJs();
+    const doc = await lib.getDocument({ data: await file.arrayBuffer() }).promise;
+    const page = await doc.getPage(1), v1 = page.getViewport({ scale: 1 });
+    const vp = page.getViewport({ scale: MAX / Math.max(v1.width, v1.height) });
+    const c = document.createElement("canvas"); c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+    const ctx = c.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height);
+    await page.render({ canvasContext: ctx, viewport: vp }).promise;
+    return { url: c.toDataURL("image/jpeg", 0.82), w: c.width, h: c.height };
+  }
+  const bmp = await createImageBitmap(file), k = Math.min(1, MAX / Math.max(bmp.width, bmp.height));
+  const c = document.createElement("canvas"); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+  const ctx = c.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height); ctx.drawImage(bmp, 0, 0, c.width, c.height);
+  return { url: c.toDataURL("image/jpeg", 0.82), w: c.width, h: c.height };
+}
+function matchSheet(name) {
+  const norm = s => String(s).toUpperCase().replace(/[^A-Z0-9.]/g, "");
+  const base = norm(name.replace(/\.[^.]+$/, ""));
+  return (projectData.drawings || []).map(d => d.number).filter(n => base.includes(norm(n))).sort((a, b) => norm(b).length - norm(a).length)[0] || null;
+}
+async function importDrawings(files, forced) {
+  if (!files.length) return;
+  await loadProject();
+  const say = t => { if (dwgProgress?.isConnected) dwgProgress.textContent = t; else toast(t); };
+  const skipped = [], batch = []; let done = 0;
+  const flush = async () => {
+    if (!batch.length) return;
+    const part = batch.splice(0);
+    await commit(`Import drawings: ${part.map(p => p.no).join(", ")}`, d => { for (const p of part) d.drawingFiles[p.no] = { file: p.path, w: p.w, h: p.h, importedAt: Date.now() }; },
+      part.map(p => ({ path: p.path, base64: p.url.split(",")[1] })));
+  };
+  try {
+    for (const f of files) {
+      const no = forced || matchSheet(f.name);
+      if (!no) { skipped.push(f.name); continue; }
+      say(`Preparing ${no} (${++done} of ${files.length})…`);
+      const r = await renderDrawing(f);
+      const path = `drawings/${no.replace(/[^A-Za-z0-9.-]/g, "_")}-${Date.now().toString(36)}.jpg`;
+      localPhotos.set(path, r.url);
+      batch.push({ no, path, ...r });
+      if (batch.length >= 4) { say(`Uploading… (${done} of ${files.length})`); await flush(); }
+    }
+    say("Uploading…"); await flush();
+    say(`Imported ${plural(done, "drawing", "drawings")}.${skipped.length ? ` Skipped (no sheet number in name): ${skipped.join(", ")}` : ""}`);
+    toast(`Imported ${plural(done, "drawing", "drawings")}`);
+  } catch (e) { say(e.message === "pdf.js" ? "Couldn’t load the PDF reader. Check your connection." : "Import stopped. Try again with the remaining files."); }
+}
+
+// ---------- sheet viewer with pins ----------
+let pzState = null;
+function pcSheet(no, focus) {
+  const d = (projectData.drawings || []).find(x => x.number === no);
+  if (!d) { app.append(el("p", { class: "empty" }, "Sheet not found.")); return; }
+  const file = drawingFile(no);
+  const onSheet = pcItems().filter(i => i.pin && i.pin.sheet === no);
+  const unit = /^PL-/.test(no) ? no.slice(3) : null;
+  const needPin = unit ? pcItems().filter(i => !i.pin && i.status === "open" && unitKeyFromText(i.unitName) === unit) : [];
+  let showClosed = false;
+  app.append(el("div", { class: "top" },
+      el("button", { class: "link", onclick: () => go({ view: "pc", sub: "drawings" }) }, "‹ Drawings"),
+      el("button", { class: "link", onclick: () => { dwgTarget = no; dwgProgress = null; $("dwgFiles").value = ""; $("dwgFiles").click(); } }, file ? "Replace file" : "Import file")),
+    el("h2", { style: "margin:4px 0 2px" }, `${d.number} · ${d.title}`),
+    el("div", { class: "unitmeta", style: "margin-bottom:10px" }, `${d.discipline} · Rev ${d.revision ?? "–"} · ${plural(onSheet.filter(i => i.status === "open").length, "open item", "open items")}`));
+
+  const wrap = el("div", { class: "pz-wrap" }), pz = el("div", { class: "pz" }), inner = el("div", { class: "pz-inner" });
+  const st = pzState = { s: 1, tx: 0, ty: 0, w: file?.w || 1100, h: file?.h || 850, placing: null, inner, pz };
+  inner.style.width = st.w + "px"; inner.style.height = st.h + "px";
+  if (file) {
+    const img = el("img", { src: photoSrc(file.file), alt: `${d.number} drawing`, draggable: "false" });
+    img.addEventListener("error", function once() { img.removeEventListener("error", once); img.src = RAW + file.file + "?t=" + Date.now(); });
+    inner.append(img);
+  } else inner.append(el("div", { class: "pz-ph" }, el("div", {}, `${d.number}`, el("br"), el("small", { style: "font-size:22px" }, "Drawing file not imported yet. Pins still work."))));
+  const pinLayer = el("div", { style: "position:absolute;inset:0" }); inner.append(pinLayer);
+  const drawPins = () => {
+    pinLayer.replaceChildren(...onSheet.filter(i => showClosed || i.status === "open").map(i =>
+      el("div", { class: `pin ${i.status}${i.id === focus ? " sel" : ""}`, "data-id": i.id, style: `left:${i.pin.x * 100}%;top:${i.pin.y * 100}%`, title: `#${i.number} ${i.title}` }, String(i.number))));
+  };
+  const apply = () => { inner.style.transform = `translate(${st.tx}px,${st.ty}px) scale(${st.s})`; inner.style.setProperty("--inv", String(1 / st.s)); };
+  const fit = () => { const r = pz.getBoundingClientRect(); st.s = st.fit = Math.min(r.width / st.w, r.height / st.h) || 0.3; st.tx = (r.width - st.w * st.s) / 2; st.ty = (r.height - st.h * st.s) / 2; apply(); };
+  const zoomAt = (cx, cy, f) => { const ns = Math.max(st.fit * 0.8, Math.min(st.fit * 14, st.s * f)); st.tx = cx - (cx - st.tx) * (ns / st.s); st.ty = cy - (cy - st.ty) * (ns / st.s); st.s = ns; apply(); };
+  const center = (x, y, zoom) => { const r = pz.getBoundingClientRect(); st.s = Math.min(st.fit * 14, zoom || st.s); st.tx = r.width / 2 - x * st.w * st.s; st.ty = r.height / 2 - y * st.h * st.s; apply(); };
+
+  // pointer pan / pinch / tap
+  const pts = new Map(); let downAt = 0, moved = 0, last = null;
+  pz.addEventListener("pointerdown", e => { pz.setPointerCapture(e.pointerId); pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (pts.size === 1) { downAt = Date.now(); moved = 0; } last = null; });
+  pz.addEventListener("pointermove", e => {
+    if (!pts.has(e.pointerId)) return;
+    const prev = pts.get(e.pointerId); pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pts.size === 1) { st.tx += e.clientX - prev.x; st.ty += e.clientY - prev.y; moved += Math.abs(e.clientX - prev.x) + Math.abs(e.clientY - prev.y); apply(); }
+    else if (pts.size === 2) {
+      const [a, b] = [...pts.values()], r = pz.getBoundingClientRect();
+      const mid = { x: (a.x + b.x) / 2 - r.left, y: (a.y + b.y) / 2 - r.top }, dist = Math.hypot(a.x - b.x, a.y - b.y);
+      if (last) { zoomAt(mid.x, mid.y, dist / last.dist); st.tx += mid.x - last.mid.x; st.ty += mid.y - last.mid.y; apply(); }
+      last = { mid, dist }; moved = 999;
+    }
+  });
+  const up = e => {
+    if (!pts.has(e.pointerId)) return;
+    pts.delete(e.pointerId); if (pts.size < 2) last = null;
+    if (pts.size || moved > 8 || Date.now() - downAt > 600) return;
+    const r = pz.getBoundingClientRect(), x = (e.clientX - r.left - st.tx) / (st.w * st.s), y = (e.clientY - r.top - st.ty) / (st.h * st.s);
+    if (st.placing) { if (x >= 0 && x <= 1 && y >= 0 && y <= 1) savePin(st.placing, no, x, y); return; }
+    const hit = document.elementsFromPoint(e.clientX, e.clientY).find(n => n.classList?.contains("pin"));
+    if (hit) openPin(pc().items[hit.dataset.id]);
+  };
+  pz.addEventListener("pointerup", up); pz.addEventListener("pointercancel", e => { pts.delete(e.pointerId); last = null; });
+  pz.addEventListener("wheel", e => { e.preventDefault(); const r = pz.getBoundingClientRect(); zoomAt(e.clientX - r.left, e.clientY - r.top, Math.exp(-e.deltaY * 0.0015)); }, { passive: false });
+
+  const banner = el("div", { class: "placing", hidden: "" });
+  st.startPlacing = it => {
+    st.placing = it.id; pz.classList.add("placing-mode");
+    banner.replaceChildren(el("span", {}, `Tap the drawing to place #${it.number}`), el("button", { type: "button", onclick: () => { st.placing = null; banner.hidden = true; pz.classList.remove("placing-mode"); } }, "Cancel"));
+    banner.hidden = false; window.scrollTo({ top: wrap.offsetTop - 60, behavior: "smooth" });
+  };
+  const tools = el("div", { class: "pztools" },
+    el("button", { type: "button", "aria-label": "Zoom in", onclick: () => { const r = pz.getBoundingClientRect(); zoomAt(r.width / 2, r.height / 2, 1.5); } }, "+"),
+    el("button", { type: "button", "aria-label": "Zoom out", onclick: () => { const r = pz.getBoundingClientRect(); zoomAt(r.width / 2, r.height / 2, 1 / 1.5); } }, "−"),
+    el("button", { type: "button", "aria-label": "Fit sheet", onclick: fit, style: "font-size:14px" }, "Fit"));
+  pz.append(inner); wrap.append(pz, tools, banner); app.append(wrap);
+
+  const toggle = el("label", { style: "display:flex;gap:8px;align-items:center;margin:10px 0 0;font-weight:500" },
+    el("input", { type: "checkbox", onchange: e => { showClosed = e.target.checked; drawPins(); } }), "Show closed items");
+  app.append(toggle);
+  if (needPin.length) {
+    app.append(el("h2", {}, `Needs a pin (${needPin.length})`));
+    needPin.forEach(it => app.append(pcCard(it, { place: () => st.startPlacing(it) })));
+  }
+  const list = onSheet.filter(i => i.status === "open").sort((a, b) => a.number - b.number);
+  if (list.length) { app.append(el("h2", {}, "On this sheet")); list.forEach(it => app.append(pcCard(it, { onSheet: true }))); }
+  if (!needPin.length && !list.length) app.append(el("p", { class: "empty" }, unit ? "No open items for this unit yet. Use “Transfer / update” on Procore Home." : "No items pinned on this sheet."));
+
+  drawPins();
+  requestAnimationFrame(() => { fit(); const f = focus && pc().items[focus]; if (f?.pin && f.pin.sheet === no) { center(f.pin.x, f.pin.y, st.fit * 3); setTimeout(() => openPin(f), 50); } });
+  if (route.place) { const it = pc().items[route.place]; route.place = null; if (it) setTimeout(() => st.startPlacing(it), 60); }
+}
+async function savePin(id, sheet, x, y) {
+  const it = pc().items[id]; if (!it) return;
+  if (pzState) { pzState.placing = null; }
+  try {
+    await commit(`Pin #${it.number} on ${sheet}`, d => {
+      const p = d.procore.items[id]; if (!p) return;
+      p.pin = { sheet, x: +x.toFixed(4), y: +y.toFixed(4) };
+      if (p.room) { const u = unitKeyFromText(p.unitName); d.procore.roomPins[`${u}|${p.room}`] = { x: p.pin.x, y: p.pin.y }; d.procore.roomPins[`stack:${u.slice(-1)}|${p.room}`] = { x: p.pin.x, y: p.pin.y }; }
+    });
+    toast(`Pinned #${it.number}`);
+    closePin(); route = { view: "pc", sub: "sheet", key: sheet, focus: id }; history.replaceState(null, "", link(route)); render();
+  } catch { toast("Couldn’t save the pin. Try again."); render(); }
+}
+
+// ---------- item card + pin detail ----------
+function pcCard(it, opts = {}) {
+  const card = el("div", { class: "pcitem " + it.status });
+  card.append(el("div", {},
+    el("div", { class: "num" }, `#${it.number}`, el("span", { class: "status " + it.status }, it.status === "open" ? "Open" : "Closed")),
+    el("h3", {}, it.title),
+    el("div", { class: "loc" }, it.location || `Unit ${it.unitName}${it.room ? ", " + it.room : ""}`),
+    it.notes ? el("p", { style: "margin:4px 0 0;color:var(--muted);font-size:15px" }, it.notes) : null,
+    el("div", { class: "chips" }, el("span", { class: "chip" }, it.trade), el("span", { class: "chip" + (it.assignee ? "" : " none") }, it.assignee || "Unassigned"))));
+  if (it.photo) {
+    const img = el("img", { src: photoSrc(it.thumb || it.photo), alt: "", loading: "lazy" });
+    img.addEventListener("error", function once() { img.removeEventListener("error", once); img.src = RAW + (it.thumb || it.photo) + "?t=" + Date.now(); });
+    card.append(el("button", { class: "thumb", "aria-label": it.video ? "Play video" : "Open photo", onclick: () => openPhoto(it) }, img, it.video ? el("span", { class: "vbadge" }, "▶ video") : null));
+  } else card.append(el("span"));
+  const acts = [];
+  if (it.pin && !opts.onSheet) acts.push(el("button", { class: "btn", onclick: () => go({ view: "pc", sub: "sheet", key: it.pin.sheet, focus: it.id }) }, "View on drawing"));
+  if (it.pin && opts.onSheet) acts.push(el("button", { class: "btn", onclick: () => { const st = pzState; if (st) { const r = st.pz.getBoundingClientRect(); st.s = Math.max(st.s, st.fit * 3); st.tx = r.width / 2 - it.pin.x * st.w * st.s; st.ty = r.height / 2 - it.pin.y * st.h * st.s; st.inner.style.transform = `translate(${st.tx}px,${st.ty}px) scale(${st.s})`; st.inner.style.setProperty("--inv", String(1 / st.s)); window.scrollTo({ top: st.pz.offsetTop - 80, behavior: "smooth" }); } } }, "Show pin"));
+  if (!it.pin && it.status === "open") {
+    if (opts.place) acts.push(el("button", { class: "btn primary", onclick: opts.place }, "Place pin"));
+    else if (it.sheet) acts.push(el("button", { class: "btn primary", onclick: () => { route = { view: "pc", sub: "sheet", key: it.sheet, place: it.id }; history.pushState(null, "", link(route)); window.scrollTo(0, 0); render(); } }, "Place pin"));
+  }
+  acts.push(el("button", { class: "btn", onclick: () => go({ view: "unit", key: it.unit }) }, "Open in punch list"));
+  card.append(el("div", { class: "actions" }, ...acts));
+  return card;
+}
+const pinSheet = $("pinSheet"), pinBg = $("pinBg");
+function openPin(it) {
+  if (!it) return;
+  pinSheet.replaceChildren(pcCard(it, { onSheet: true }),
+    el("div", { class: "btns" },
+      it.status === "open" ? el("button", { class: "btn", type: "button", onclick: () => { closePin(); pzState?.startPlacing(it); } }, "Move pin") : null,
+      el("button", { class: "btn primary", type: "button", onclick: closePin }, "Close")));
+  pinSheet.querySelectorAll(".pinsel").forEach(n => n.classList.remove("pinsel"));
+  document.querySelectorAll(".pin.sel").forEach(n => n.classList.remove("sel"));
+  document.querySelector(`.pin[data-id="${it.id}"]`)?.classList.add("sel");
+  pinSheet.classList.add("open"); pinBg.classList.add("open");
+}
+function closePin() { pinSheet.classList.remove("open"); pinBg.classList.remove("open"); }
+pinBg.addEventListener("click", closePin);
+window.addEventListener("hashchange", closePin);
+
+// ---------- punch list (Procore copy) ----------
+let pcFilter = { status: "open", trade: "", q: "" };
+function pcPunch() {
+  const all = pcItems();
+  const tradesUsed = [...new Set(all.map(i => i.trade))].sort();
+  const status = el("select", { "aria-label": "Status" }, ...[["open", "Open"], ["closed", "Closed"], ["all", "All"]].map(([v, l]) => el("option", { value: v }, l)));
+  const trade = el("select", { "aria-label": "Trade" }, el("option", { value: "" }, "All trades"), ...tradesUsed.map(t => el("option", { value: t }, t)));
+  const q = el("input", { type: "search", placeholder: "Search", "aria-label": "Search items" });
+  status.value = pcFilter.status; trade.value = pcFilter.trade; q.value = pcFilter.q;
+  const list = el("div");
+  const draw = () => {
+    pcFilter = { status: status.value, trade: trade.value, q: q.value };
+    const t = q.value.trim().toLowerCase();
+    const shown = all.filter(i => (status.value === "all" || i.status === status.value) && (!trade.value || i.trade === trade.value)
+      && (!t || `${i.number} ${i.title} ${i.notes} ${i.location} ${i.assignee}`.toLowerCase().includes(t)))
+      .sort((a, b) => unitName(a.unit).localeCompare(unitName(b.unit), undefined, { numeric: true }) || a.number - b.number);
+    const kids = []; let lastU = null;
+    for (const it of shown) { if (it.unit !== lastU) { kids.push(el("div", { class: "room" }, `Unit ${it.unitName}`)); lastU = it.unit; } kids.push(pcCard(it)); }
+    list.replaceChildren(...(kids.length ? kids : [el("p", { class: "empty" }, all.length ? "No items match." : "Nothing here yet. Use “Transfer / update open items” on Procore Home.")]));
+  };
+  [status, trade].forEach(n => n.addEventListener("change", draw)); q.addEventListener("input", draw);
+  app.append(el("div", { class: "filters" }, status, trade, q), list);
+  draw();
+}
+
+// ---------- photos ----------
+function pcPhotos() {
+  const withPic = pcItems().filter(i => i.photo).sort((a, b) => b.createdAt - a.createdAt);
+  if (!withPic.length) { app.append(el("p", { class: "empty" }, "No photos yet. Photos come over with each transferred item.")); return; }
+  const byUnit = new Map(); for (const i of withPic) { const k = i.unitName; if (!byUnit.has(k)) byUnit.set(k, []); byUnit.get(k).push(i); }
+  for (const [u, list] of [...byUnit].sort((a, b) => a[0].localeCompare(b[0], undefined, { numeric: true }))) {
+    app.append(el("div", { class: "room" }, `Unit ${u}`), el("div", { class: "gallery" }, ...list.map(i => {
+      const img = el("img", { src: photoSrc(i.thumb || i.photo), alt: i.title, loading: "lazy" });
+      img.addEventListener("error", function once() { img.removeEventListener("error", once); img.src = RAW + (i.thumb || i.photo); });
+      return el("button", { type: "button", "aria-label": `#${i.number} ${i.title}`, onclick: () => openPhoto(i) }, img, el("span", { class: "cap" }, `#${i.number} ${i.room || ""}`), i.video ? el("span", { class: "vbadge" }, "▶") : null);
+    })));
+  }
+}
+
+// ---------- directory ----------
+function pcDirectory() {
+  const tradeOf = {}; for (const [t, c] of Object.entries(TRADE_SUBS)) (tradeOf[c] ||= []).push(t);
+  const q = el("input", { type: "search", placeholder: "Search people and companies", "aria-label": "Search directory" });
+  const list = el("div");
+  const draw = () => {
+    const t = q.value.trim().toLowerCase(), m = s => !t || String(s).toLowerCase().includes(t);
+    const subs = Object.keys(tradeOf).filter(c => m(c + tradeOf[c].join(" ")));
+    const people = (projectData.team || []).filter(p => m(`${p.name} ${p.title} ${p.company}`));
+    list.replaceChildren(
+      el("h2", {}, "Subcontractors by trade"),
+      ...subs.map(c => el("div", { class: "person" }, el("b", {}, c), el("div", {}, tradeOf[c].join(", ")))),
+      el("h2", {}, "People"),
+      ...people.map(p => el("div", { class: "person" }, el("b", {}, p.name),
+        el("div", {}, [p.title, p.company].filter(Boolean).join(" · ")),
+        el("div", {}, ...[p.mobile_phone || p.business_phone ? el("a", { href: "tel:" + String(p.mobile_phone || p.business_phone).replace(/[^\d+]/g, "") }, p.mobile_phone || p.business_phone) : null,
+          p.email ? el("span", {}, (p.mobile_phone || p.business_phone) ? " · " : "", el("a", { href: "mailto:" + p.email }, p.email)) : null]))));
+  };
+  q.addEventListener("input", draw);
+  app.append(el("div", { class: "filters" }, q), list);
+  draw();
+}
 
 // ---------- boot ----------
 render();
