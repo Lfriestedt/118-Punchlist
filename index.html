@@ -178,9 +178,14 @@ textarea { min-height: 72px; resize: vertical; }
 .pz-inner { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
 .pz-inner img, .pz-ph { width: 100%; height: 100%; display: block; pointer-events: none; }
 .pz-ph { background: #fff; color: #5B6675; display: grid; place-items: center; text-align: center; font-size: 34px; background-image: linear-gradient(#e6e9ed 1px, transparent 1px), linear-gradient(90deg, #e6e9ed 1px, transparent 1px); background-size: 50px 50px; }
-.pin { position: absolute; width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 50%; background: var(--tape); color: var(--tape-ink); border: 2px solid #000; font: 600 12px/26px "Barlow", sans-serif; text-align: center; transform: scale(var(--inv, 1)); box-shadow: 0 2px 6px rgba(0,0,0,.35); }
-.pin.closed { background: var(--done); color: #fff; }
-.pin.sel { outline: 4px solid var(--pc); outline-offset: 2px; }
+.pin { position: absolute; width: 34px; height: 34px; margin: -17px 0 0 -17px; border-radius: 7px; background: var(--pc); color: #fff; border: 2px solid #fff; display: grid; place-items: center; transform: scale(var(--inv, 1)); box-shadow: 0 2px 7px rgba(0,0,0,.45); }
+.pin svg { width: 20px; height: 20px; pointer-events: none; }
+.pin.nophoto { border-radius: 50%; font: 600 12px "Barlow", sans-serif; }
+.pin .n { position: absolute; top: -9px; right: -11px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px; background: #18202B; color: #fff; font: 600 11px/18px "Barlow", sans-serif; text-align: center; pointer-events: none; }
+.pin.closed { background: var(--done); }
+.pin.sel { outline: 4px solid var(--tape); outline-offset: 2px; }
+.pinphoto { width: 100%; max-height: 46vh; object-fit: contain; background: #000; border-radius: 6px; display: block; border: 0; padding: 0; }
+.pinphoto-btn { display: block; width: 100%; border: 0; padding: 0; background: none; margin-bottom: 4px; }
 .pztools { position: absolute; right: 10px; top: 10px; display: flex; flex-direction: column; gap: 6px; z-index: 2; }
 .pztools button { width: 42px; height: 42px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); font-size: 20px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,.15); }
 .placing { position: absolute; left: 10px; right: 64px; top: 10px; z-index: 2; background: var(--pc); color: #fff; border-radius: 6px; padding: 10px 12px; font-weight: 500; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
@@ -1093,7 +1098,7 @@ const stampOf = it => [it.title, it.notes, it.trade, it.assignee, it.room, it.un
 
 async function transferAll(btn) {
   btn.disabled = true; btn.textContent = "Transferring…";
-  await loadProject();
+  await Promise.all([loadProject(), loadRoomMap()]);
   let summary = null;
   try {
     await commit("Transfer punch list to Procore", d => {
@@ -1106,11 +1111,12 @@ async function transferAll(btn) {
           assignee: it.assignee || "", photo: it.photo || null, thumb: it.thumb || null, video: it.video || null, createdAt: it.createdAt,
           location: locationText(it), sheet: sheetForUnit(it.unitName || it.unit), updatedFrom: stampOf(it) };
         if (isOpen(it)) {
-          if (!ex) { P.items[it.id] = { id: it.id, number: P.nextNumber++, ...snap, status: "open", pin: autoPin(P, snap), transferredAt: now, updatedAt: now }; added++; }
+          if (!ex) { P.items[it.id] = { id: it.id, number: P.nextNumber++, ...snap, status: "open", pin: autoPin(P, snap, it.id), transferredAt: now, updatedAt: now }; added++; }
+          else if (!ex.pin && snap.sheet && ex.updatedFrom === snap.updatedFrom && ex.status === "open") { ex.pin = autoPin(P, snap, ex.id); updated++; }
           else if (ex.updatedFrom !== snap.updatedFrom || ex.status !== "open") {
             const moved = ex.sheet !== snap.sheet || ex.room !== snap.room;
             Object.assign(ex, snap, { status: "open", updatedAt: now, closedAt: null });
-            if (moved || !ex.pin) ex.pin = autoPin(P, snap, ex.id);
+            if (moved || !ex.pin || ex.pin.auto) ex.pin = autoPin(P, snap, ex.id);
             updated++;
           }
         } else if (ex && ex.status !== "closed") { Object.assign(ex, snap, { status: "closed", closedAt: it.doneAt || now, updatedAt: now }); closed++; }
@@ -1122,12 +1128,27 @@ async function transferAll(btn) {
   } catch (e) { toast(e.message?.startsWith("Someone") ? e.message : "Transfer didn’t finish. Try again."); render(); }
 }
 // Reuse a pin location learned for the same room in this unit, or the same room in the same unit stack (202, 302, 402…).
+// room-map.json: where each Procore room's label sits on its unit's PL sheet (read from the punchlist PDF).
+let roomMap = null, roomMapLoading = null;
+function loadRoomMap() {
+  return roomMapLoading ||= fetch("room-map.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : {}).catch(() => ({})).then(m => (roomMap = m));
+}
+function roomSpot(P, unitName, room) {
+  const u = unitKeyFromText(unitName), r = String(room || "").trim(), map = roomMap?.[u] || {};
+  if (r && P.roomPins[`${u}|${r}`]) return P.roomPins[`${u}|${r}`];                 // you placed one here before
+  const key = r && Object.keys(map).find(k => k.toLowerCase() === r.toLowerCase());
+  if (key) return map[key];                                                          // room label on the drawing
+  if (r && P.roomPins[`stack:${u.slice(-1)}|${r}`]) return P.roomPins[`stack:${u.slice(-1)}|${r}`];
+  return map._unit ? { ...map._unit, approx: true } : null;                          // unit tag (living room)
+}
+// Every transferred item gets a marker: at its room, fanned out if several share a room.
 function autoPin(P, snap, selfId) {
-  if (!snap.sheet || !snap.room) return null;
-  const u = unitKeyFromText(snap.unitName), base = P.roomPins[`${u}|${snap.room}`] || P.roomPins[`stack:${u.slice(-1)}|${snap.room}`];
+  if (!snap.sheet) return null;
+  const base = roomSpot(P, snap.unitName, snap.room);
   if (!base) return null;
-  const near = Object.values(P.items).filter(i => i.id !== selfId && i.pin && i.pin.sheet === snap.sheet && Math.hypot(i.pin.x - base.x, i.pin.y - base.y) < 0.05).length;
-  return { sheet: snap.sheet, x: Math.min(.98, base.x + near * 0.018), y: Math.min(.98, base.y + near * 0.012), auto: true };
+  const n = Object.values(P.items).filter(i => i.id !== selfId && i.pin && i.pin.sheet === snap.sheet && Math.hypot(i.pin.x - base.x, i.pin.y - base.y) < 0.09).length;
+  const a = n * 2.4 - 0.8, r = n ? 0.032 * Math.sqrt(n) : 0;
+  return { sheet: snap.sheet, x: +Math.min(.99, Math.max(.01, base.x + Math.cos(a) * r)).toFixed(4), y: +Math.min(.99, Math.max(.01, base.y + Math.sin(a) * r * 1.3)).toFixed(4), auto: true, approx: !!base.approx };
 }
 
 // ---------- drawings list + import ----------
@@ -1135,7 +1156,8 @@ function pcDrawings() {
   const all = plDrawings();
   const q = el("input", { type: "search", placeholder: "Search units", "aria-label": "Search punchlist sheets" });
   const list = el("div");
-  const counts = {}; for (const i of pcItems()) if (i.pin && i.status === "open") counts[i.pin.sheet] = (counts[i.pin.sheet] || 0) + 1;
+  const counts = {}, photoCounts = {};
+  for (const i of pcItems()) if (i.pin && i.status === "open") { counts[i.pin.sheet] = (counts[i.pin.sheet] || 0) + 1; if (i.photo) photoCounts[i.pin.sheet] = (photoCounts[i.pin.sheet] || 0) + 1; }
   const prog = el("div", { class: "progress", role: "status" });
   const draw = () => {
     const t = q.value.trim().toLowerCase();
@@ -1144,9 +1166,10 @@ function pcDrawings() {
     const order = [...groups.keys()];
     list.replaceChildren(...order.flatMap(g => [el("div", { class: "disc" }, g),
       ...groups.get(g).map(d => el("button", { class: "sheetrow", type: "button", onclick: () => go({ view: "pc", sub: "sheet", key: d.number }) },
-        el("span", { class: "no" }, d.number),
-        el("span", {}, d.title),
-        el("span", { class: "meta" }, counts[d.number] ? el("span", { class: "badge" }, String(counts[d.number])) : null, " ",
+        el("span", { class: "no" }, `Unit ${d.number.slice(3)}`),
+        el("span", { style: "color:var(--muted);font-size:14px" }, d.number),
+        el("span", { class: "meta" }, photoCounts[d.number] ? el("span", { class: "badge", title: "Photos on this sheet" }, `📷 ${photoCounts[d.number]}`) : null, " ",
+          counts[d.number] ? el("span", { class: "badge gray", title: "Open items" }, `${counts[d.number]} open`) : null, " ",
           drawingFile(d.number) ? "" : el("span", { class: "badge gray", title: "Drawing file not imported" }, "no file"))))]));
     if (!shown.length) list.replaceChildren(el("p", { class: "empty" }, "No sheets match."));
   };
@@ -1270,7 +1293,7 @@ function pcSheet(no, focus) {
   app.append(el("div", { class: "top" },
       el("button", { class: "link", onclick: () => go({ view: "pc", sub: "drawings" }) }, "‹ Drawings"),
       el("button", { class: "link", onclick: () => { dwgTarget = no; dwgProgress = null; $("dwgFiles").value = ""; $("dwgFiles").click(); } }, file ? "Replace file" : "Import file")),
-    el("h2", { style: "margin:4px 0 2px" }, `${d.number} · ${d.title}`),
+    el("h2", { style: "margin:4px 0 2px" }, /^PL-/.test(d.number) ? `Unit ${d.number.slice(3)}` : d.title, el("span", { style: "color:var(--muted);font-weight:600;font-size:16px" }, `  ${d.number}`)),
     el("div", { class: "unitmeta", style: "margin-bottom:10px" }, `${d.discipline} · Rev ${d.revision ?? "–"} · ${plural(onSheet.filter(i => i.status === "open").length, "open item", "open items")}`));
 
   const wrap = el("div", { class: "pz-wrap" }), pz = el("div", { class: "pz" }), inner = el("div", { class: "pz-inner" });
@@ -1284,7 +1307,7 @@ function pcSheet(no, focus) {
   const pinLayer = el("div", { style: "position:absolute;inset:0" }); inner.append(pinLayer);
   const drawPins = () => {
     pinLayer.replaceChildren(...onSheet.filter(i => showClosed || i.status === "open").map(i =>
-      el("div", { class: `pin ${i.status}${i.id === focus ? " sel" : ""}`, "data-id": i.id, style: `left:${i.pin.x * 100}%;top:${i.pin.y * 100}%`, title: `#${i.number} ${i.title}` }, String(i.number))));
+      pinMarker(i, i.id === focus)));
   };
   const apply = () => { inner.style.transform = `translate(${st.tx}px,${st.ty}px) scale(${st.s})`; inner.style.setProperty("--inv", String(1 / st.s)); };
   const fit = () => { const r = pz.getBoundingClientRect(); st.s = st.fit = Math.min(r.width / st.w, r.height / st.h) || 0.3; st.tx = (r.width - st.w * st.s) / 2; st.ty = (r.height - st.h * st.s) / 2; apply(); };
@@ -1359,15 +1382,24 @@ async function savePin(id, sheet, x, y) {
 }
 
 // ---------- item card + pin detail ----------
+const CAM_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a2 2 0 0 1 2-2h2.2l1.4-2h6.8l1.4 2H19a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="4"/></svg>';
+function pinMarker(i, sel) {
+  const m = el("div", { class: `pin ${i.status}${i.photo ? "" : " nophoto"}${sel ? " sel" : ""}`, "data-id": i.id, role: "button", "aria-label": `#${i.number} ${i.title}${i.photo ? ", photo" : ""}`,
+    style: `left:${i.pin.x * 100}%;top:${i.pin.y * 100}%`, title: `#${i.number} ${i.title}` });
+  if (i.photo) { m.innerHTML = CAM_SVG; m.append(el("span", { class: "n" }, String(i.number))); }
+  else m.textContent = String(i.number);
+  return m;
+}
 function pcCard(it, opts = {}) {
   const card = el("div", { class: "pcitem " + it.status });
   card.append(el("div", {},
     el("div", { class: "num" }, `#${it.number}`, el("span", { class: "status " + it.status }, it.status === "open" ? "Open" : "Closed")),
     el("h3", {}, it.title),
     el("div", { class: "loc" }, it.location || `Unit ${it.unitName}${it.room ? ", " + it.room : ""}`),
+    it.pin?.approx ? el("div", { class: "loc", style: "color:var(--pc)" }, "Room not found on the drawing, so it’s placed at the unit tag. Use Move pin to adjust.") : null,
     it.notes ? el("p", { style: "margin:4px 0 0;color:var(--muted);font-size:15px" }, it.notes) : null,
     el("div", { class: "chips" }, el("span", { class: "chip" }, it.trade), el("span", { class: "chip" + (it.assignee ? "" : " none") }, it.assignee || "Unassigned"))));
-  if (it.photo) {
+  if (it.photo && !opts.noThumb) {
     const img = el("img", { src: photoSrc(it.thumb || it.photo), alt: "", loading: "lazy" });
     img.addEventListener("error", function once() { img.removeEventListener("error", once); img.src = RAW + (it.thumb || it.photo) + "?t=" + Date.now(); });
     card.append(el("button", { class: "thumb", "aria-label": it.video ? "Play video" : "Open photo", onclick: () => openPhoto(it) }, img, it.video ? el("span", { class: "vbadge" }, "▶ video") : null));
@@ -1386,10 +1418,16 @@ function pcCard(it, opts = {}) {
 const pinSheet = $("pinSheet"), pinBg = $("pinBg");
 function openPin(it) {
   if (!it) return;
-  pinSheet.replaceChildren(pcCard(it, { onSheet: true }),
+  let hero = null;
+  if (it.photo) {
+    const img = el("img", { class: "pinphoto", src: photoSrc(it.photo), alt: it.title });
+    img.addEventListener("error", function once() { img.removeEventListener("error", once); img.src = RAW + it.photo + "?t=" + Date.now(); });
+    hero = el("button", { class: "pinphoto-btn", type: "button", "aria-label": it.video ? "Play video" : "View photo full screen", onclick: () => openPhoto(it) }, img);
+  }
+  pinSheet.replaceChildren(...[hero, pcCard(it, { onSheet: true, noThumb: !!hero }),
     el("div", { class: "btns" },
       it.status === "open" ? el("button", { class: "btn", type: "button", onclick: () => { closePin(); pzState?.startPlacing(it); } }, "Move pin") : null,
-      el("button", { class: "btn primary", type: "button", onclick: closePin }, "Close")));
+      el("button", { class: "btn primary", type: "button", onclick: closePin }, "Close"))].filter(Boolean));
   pinSheet.querySelectorAll(".pinsel").forEach(n => n.classList.remove("pinsel"));
   document.querySelectorAll(".pin.sel").forEach(n => n.classList.remove("sel"));
   document.querySelector(`.pin[data-id="${it.id}"]`)?.classList.add("sel");
