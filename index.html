@@ -248,7 +248,34 @@ const OWNER = "Lfriestedt";
 const REPO = "118-Punchlist";
 const BRANCH = "main";
 const SITE_NAME = "118 Punch List";
-const TRADES = ["Electrical", "Plumbing", "HVAC", "Drywall", "Paint", "Carpentry", "Flooring", "Tile", "Appliances", "Cleaning", "General"];
+// Trade -> subcontractor on this job (from Procore daily manpower logs). Edit names here if a sub changes.
+const TRADE_SUBS = {
+  "Electrical": "Switch Electric, Inc.",
+  "Fire Alarm": "Forbel Alarms",
+  "Plumbing": "Toma's Plumbing Inc",
+  "HVAC": "Mechanical Brothers Co",
+  "Fire Sprinkler": "Fire Control Inc",
+  "Drywall": "Garcia Professional Construction Inc",
+  "Paint": "Piech Decorating Inc",
+  "Carpentry / Doors / Trim": "Kinzini LLC",
+  "Cabinets": "Kinzini LLC",
+  "Countertops": "Absolute Stone of Illinois Inc.",
+  "Flooring": "Renova One",
+  "Tile": "NCO Flooring & Remodeling Inc",
+  "Backsplash": "Diamond Carpet Service, Inc.",
+  "Appliances": "Grand Appliance",
+  "Windows": "Windows US",
+  "Blinds": "Better Blinds, Inc.",
+  "Firestopping / Insulation": "Advanced Insulation, Inc.",
+  "Railings / Metals": "Archers Metal Deco",
+  "Framing": "H&R Remodeling",
+  "Masonry": "Modern Masonry",
+  "Roofing": "Donaly Roofing",
+  "Elevator": "TKE Elevator Corporation",
+  "Cleaning": "3F Construction LLC",
+  "General": "3F Construction LLC",
+};
+const TRADES = Object.keys(TRADE_SUBS);
 const ROOMS = ["Kitchen", "Living room", "Bedroom 1", "Bedroom 2", "Bathroom", "Bathroom 2", "Hallway", "Entry", "Laundry", "Balcony", "Closet"];
 /* ============================================ */
 
@@ -593,7 +620,21 @@ function signOutLocal() { token = null; isOwner = false; try { localStorage.remo
 
 // ---------- add / edit sheet ----------
 const sheet = $("sheet"), sheetBg = $("sheetBg");
-$("fTrade").append(...TRADES.map(t => el("option", { value: t }, t)));
+const tradeOption = t => el("option", { value: t }, TRADE_SUBS[t] ? `${t} — ${TRADE_SUBS[t]}` : t);
+// Picking a trade fills "Assigned to" with that trade's sub, unless someone typed a name there.
+function wireTradeAssign(tradeId, whoId) {
+  const who = $(whoId);
+  who.addEventListener("input", () => { who.dataset.auto = ""; });
+  $(tradeId).addEventListener("change", () => autoAssign(tradeId, whoId));
+}
+function autoAssign(tradeId, whoId, force) {
+  const who = $(whoId), sub = TRADE_SUBS[$(tradeId).value];
+  if (!sub) return;
+  if (force || !who.value.trim() || who.dataset.auto === "1") { who.value = sub; who.dataset.auto = "1"; }
+}
+function ensureTradeOption(sel, t) { if (t && ![...sel.options].some(o => o.value === t)) sel.append(tradeOption(t)); }
+$("fTrade").append(...TRADES.map(tradeOption));
+wireTradeAssign("fTrade", "fWho");
 $("rooms").append(...ROOMS.map(r => el("option", { value: r })));
 let photo = null, editing = null;
 function openSheet(it = null) {
@@ -604,10 +645,12 @@ function openSheet(it = null) {
   $("people").replaceChildren(...[...new Set(items().map(i => i.assignee).filter(Boolean))].sort().map(p => el("option", { value: p })));
   if (it) {
     $("fUnit").value = unitName(it.unit); $("fRoom").value = it.room || ""; $("fTitle").value = it.title || "";
-    $("fNotes").value = it.notes || ""; $("fTrade").value = it.trade || "General"; $("fWho").value = it.assignee || "";
+    ensureTradeOption($("fTrade"), it.trade);
+    $("fNotes").value = it.notes || ""; $("fTrade").value = it.trade || "General"; $("fWho").value = it.assignee || ""; $("fWho").dataset.auto = "";
   } else {
     if (route.view === "unit") $("fUnit").value = unitName(route.key);
-    if (route.view === "trade") $("fTrade").value = TRADES.find(t => t.toLowerCase() === route.key.toLowerCase()) || "General";
+    $("fWho").dataset.auto = "";
+    if (route.view === "trade") { $("fTrade").value = TRADES.find(t => t.toLowerCase() === route.key.toLowerCase()) || "General"; autoAssign("fTrade", "fWho"); }
     if (route.view === "who" && route.key !== "unassigned") $("fWho").value = route.key;
   }
   fillRoomList($("fUnit").value);
@@ -714,7 +757,8 @@ let aiKey = null;
 try { aiKey = localStorage.getItem("pl_ai_key"); } catch {}
 
 const qSheet = $("qSheet"), qBg = $("qBg"), cSheet = $("cSheet"), cBg = $("cBg");
-$("qTrade").append(...TRADES.map(t => el("option", { value: t }, t)));
+$("qTrade").append(...TRADES.map(tradeOption));
+wireTradeAssign("qTrade", "qWho");
 let cap = null;                    // { kind, full, thumb, frames[], videoFile, videoURL }
 let capSeq = 0, lastPick = "cPhoto", dirty = new Set();
 let saveQueue = Promise.resolve(), pendingSaves = 0;
@@ -796,6 +840,7 @@ async function openReview() {
   $("qTitle").value = ""; $("qNotes").value = ""; $("qWho").value = "";
   $("qUnit").value = route.view === "unit" ? unitName(route.key) : recall("unit");
   $("qTrade").value = (route.view === "trade" && TRADES.find(t => t.toLowerCase() === route.key.toLowerCase())) || "General";
+  $("qWho").dataset.auto = ""; if (route.view === "trade") autoAssign("qTrade", "qWho");
   $("qPeople").replaceChildren(...[...new Set(items().map(i => i.assignee).filter(Boolean))].sort().map(p => el("option", { value: p })));
   await loadProject();
   fillQuickRooms(recall("room"));
@@ -834,7 +879,7 @@ async function identify(seq) {
       { type: "text", text: `${cap.kind === "video" ? `These are ${cap.frames.length} frames from a short walkthrough video, in order.` : "This is a jobsite photo."}
 Project: ${ctx.desc}
 Unit: ${$("qUnit").value || "unknown"}. Rooms in this unit: ${(rooms.length ? rooms : ROOMS).join(", ")}.
-Project companies: ${ctx.companies.join("; ")}.${people.length ? `\nPeople already used as assignees: ${people.join(", ")}.` : ""}
+Trades and the sub responsible for each: ${TRADES.map(t => `${t} = ${TRADE_SUBS[t]}`).join("; ")}. Set assignee to the sub for the trade you choose.${people.length ? `\nPeople already used as assignees: ${people.join(", ")}.` : ""}
 Identify the most important punch list deficiency shown (incomplete, damaged or incorrect finish work) and call create_punch_item once. If nothing is clearly wrong, still call it with your best description and confidence "low".` }];
     const r = await fetch("https://api.anthropic.com/v1/messages", { method: "POST", headers: {
         "x-api-key": aiKey, "anthropic-version": "2023-06-01", "content-type": "application/json", "anthropic-dangerous-direct-browser-access": "true" },
@@ -849,9 +894,9 @@ Identify the most important punch list deficiency shown (incomplete, damaged or 
     if (!out) throw new Error("no result");
     const set = (id, v) => { if (v != null && !dirty.has(id)) $(id).value = v; };
     set("qTitle", out.title); set("qNotes", out.notes);
-    if (TRADES.includes(out.trade)) set("qTrade", out.trade);
+    if (TRADES.includes(out.trade) && !dirty.has("qTrade")) { $("qTrade").value = out.trade; if (!dirty.has("qWho")) autoAssign("qTrade", "qWho", true); }
     if (out.room && [...$("qRoom").options].some(o => o.value === out.room)) set("qRoom", out.room);
-    set("qWho", out.assignee);
+    if (out.assignee && !dirty.has("qWho") && !TRADE_SUBS[$("qTrade").value]) set("qWho", out.assignee);
     setAI(out.confidence === "low" ? "Claude isn’t sure. Check the details." : "Filled in by Claude. Check and save.", out.confidence === "low" ? "bad" : "ok");
   } catch (e) {
     if (seq !== capSeq) return;
