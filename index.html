@@ -191,9 +191,6 @@ textarea { min-height: 72px; resize: vertical; }
 .gallery button { position: relative; aspect-ratio: 1; border: 0; padding: 0; border-radius: 3px; overflow: hidden; background: var(--line); }
 .gallery img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .gallery .cap { position: absolute; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.6); color: #fff; font-size: 11px; padding: 2px 5px; text-align: left; }
-.person { padding: 10px 2px; border-bottom: 1px solid var(--line); }
-.person b { font-weight: 600; } .person div { color: var(--muted); font-size: 14px; }
-.person a { color: var(--ink); }
 .progress { font-size: 14px; color: var(--muted); margin-top: 8px; }
 @media print { .top, .fab, .addunit, .sub, .foot, .noprint { display: none !important; } body { background: #fff; } }
 </style>
@@ -1033,7 +1030,8 @@ kSheet.addEventListener("submit", e => {
 // "Transfer" copies open punch list items into it and pins each one on its unit's sheet (PL-<unit>).
 const pc = () => data.procore;
 const pcItems = () => Object.values(pc().items || {});
-const sheetForUnit = u => { const n = "PL-" + unitKeyFromText(u); return (projectData?.drawings || []).some(d => d.number === n) ? n : null; };
+const plDrawings = () => (projectData?.drawings || []).filter(d => d.discipline === "PUNCHLIST");
+const sheetForUnit = u => { const n = "PL-" + unitKeyFromText(u); return plDrawings().some(d => d.number === n) ? n : null; };
 const drawingFile = n => data.drawingFiles?.[n] || null;
 function locationText(it) {
   const pu = projectUnits?.get(unitKeyFromText(it.unitName || it.unit));
@@ -1056,7 +1054,7 @@ function renderChooser() {
 function renderPC() {
   if (!projectData) { app.append(modeTabs("pc"), el("p", { class: "empty" }, "Loading project…")); loadProject().then(() => { if (route.view === "pc") render(); }); return; }
   const sub = route.sub || "home";
-  const tabs = [["home", "Home"], ["drawings", "Drawings"], ["punch", "Punch List"], ["photos", "Photos"], ["directory", "Directory"]];
+  const tabs = [["home", "Home"], ["drawings", "Drawings"], ["punch", "Punch List"], ["photos", "Photos"]];
   app.append(modeTabs("pc"),
     el("div", { class: "pchead" }, el("span", { class: "proj" }, projectData.project.display_name)),
     el("nav", { class: "pcnav noprint" }, ...tabs.map(([k, l]) => el("button", { class: (sub === k || (sub === "sheet" && k === "drawings")) ? "on" : "", onclick: () => go({ view: "pc", sub: k }) }, l))));
@@ -1064,7 +1062,6 @@ function renderPC() {
   else if (sub === "sheet") pcSheet(route.key, route.focus);
   else if (sub === "punch") pcPunch();
   else if (sub === "photos") pcPhotos();
-  else if (sub === "directory") pcDirectory();
   else pcHome();
 }
 
@@ -1072,7 +1069,7 @@ function renderPC() {
 function pcHome() {
   const p = projectData.project, all = pcItems(), open = all.filter(i => i.status === "open");
   const needPin = open.filter(i => !i.pin).length, last = pc().lastTransfer;
-  const plSheets = (projectData.drawings || []).filter(d => d.discipline === "PUNCHLIST");
+  const plSheets = plDrawings();
   const imported = plSheets.filter(d => drawingFile(d.number)).length;
   const pending = items().filter(isOpen).filter(i => { const x = pc().items[i.id]; return !x || x.updatedFrom !== stampOf(i); }).length;
   app.append(el("h1", {}, p.name),
@@ -1135,17 +1132,17 @@ function autoPin(P, snap, selfId) {
 
 // ---------- drawings list + import ----------
 function pcDrawings() {
-  const all = projectData.drawings || [];
-  const q = el("input", { type: "search", placeholder: "Search sheets", "aria-label": "Search sheets" });
+  const all = plDrawings();
+  const q = el("input", { type: "search", placeholder: "Search units", "aria-label": "Search punchlist sheets" });
   const list = el("div");
   const counts = {}; for (const i of pcItems()) if (i.pin && i.status === "open") counts[i.pin.sheet] = (counts[i.pin.sheet] || 0) + 1;
   const prog = el("div", { class: "progress", role: "status" });
   const draw = () => {
     const t = q.value.trim().toLowerCase();
-    const shown = all.filter(d => !t || `${d.number} ${d.title} ${d.discipline}`.toLowerCase().includes(t));
-    const groups = new Map(); for (const d of shown) { const g = d.discipline || "Other"; if (!groups.has(g)) groups.set(g, []); groups.get(g).push(d); }
-    const order = [...groups.keys()].sort((a, b) => (b === "PUNCHLIST") - (a === "PUNCHLIST") || a.localeCompare(b));
-    list.replaceChildren(...order.flatMap(g => [el("div", { class: "disc" }, g === "PUNCHLIST" ? "Punchlist" : g),
+    const shown = all.filter(d => !t || `${d.number} ${d.title}`.toLowerCase().includes(t)).sort((a, b) => a.number.localeCompare(b.number, undefined, { numeric: true }));
+    const groups = new Map(); for (const d of shown) { const g = `Floor ${d.number.slice(3, 4)}`; if (!groups.has(g)) groups.set(g, []); groups.get(g).push(d); }
+    const order = [...groups.keys()];
+    list.replaceChildren(...order.flatMap(g => [el("div", { class: "disc" }, g),
       ...groups.get(g).map(d => el("button", { class: "sheetrow", type: "button", onclick: () => go({ view: "pc", sub: "sheet", key: d.number }) },
         el("span", { class: "no" }, d.number),
         el("span", {}, d.title),
@@ -1156,7 +1153,7 @@ function pcDrawings() {
   q.addEventListener("input", draw);
   app.append(el("div", { class: "filters" }, q,
       el("button", { class: "btn", type: "button", onclick: () => { dwgTarget = null; $("dwgFiles").value = ""; $("dwgFiles").click(); } }, "Import drawing files")),
-    el("p", { class: "sub", style: "margin:0" }, "Download sheets from Procore as PDF or PNG, then import them here. Files are matched to sheets by number in the file name, like “PL-202”."),
+    el("p", { class: "sub", style: "margin:0" }, "Punchlist sheets, one per unit. Import the combined punchlist PDF from Procore (pages are matched by their “Unit ###” title), or single sheets named like “PL-202”."),
     prog, list);
   dwgProgress = prog;
   draw();
@@ -1175,17 +1172,30 @@ function loadPdfJs() {
   });
   return pdfjsReady;
 }
+const isPdf = f => f.type === "application/pdf" || /\.pdf$/i.test(f.name);
+async function renderPdfPage(page) {
+  const MAX = 3200, v1 = page.getViewport({ scale: 1 });
+  const vp = page.getViewport({ scale: MAX / Math.max(v1.width, v1.height) });
+  const c = document.createElement("canvas"); c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+  const ctx = c.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height);
+  await page.render({ canvasContext: ctx, viewport: vp }).promise;
+  const out = { url: c.toDataURL("image/jpeg", 0.8), w: c.width, h: c.height };
+  c.width = c.height = 0; page.cleanup();
+  return out;
+}
+// Sheet title on each punchlist page reads "Unit 402" (mixed case); plan room tags are "UNIT 202" (caps), so match case-sensitively.
+async function sheetFromPageText(page) {
+  const txt = (await page.getTextContent()).items.map(i => i.str).join(" ");
+  const m = txt.match(/\bUnit\s*(\d{3})\b/) || txt.match(/\bPL-?(\d{3})\b/);
+  const no = m ? "PL-" + m[1] : null;
+  return no && plDrawings().some(d => d.number === no) ? no : null;
+}
 async function renderDrawing(file) {
   const MAX = 3200;
-  if (file.type === "application/pdf" || /\.pdf$/i.test(file.name)) {
+  if (isPdf(file)) {
     const lib = await loadPdfJs();
     const doc = await lib.getDocument({ data: await file.arrayBuffer() }).promise;
-    const page = await doc.getPage(1), v1 = page.getViewport({ scale: 1 });
-    const vp = page.getViewport({ scale: MAX / Math.max(v1.width, v1.height) });
-    const c = document.createElement("canvas"); c.width = Math.round(vp.width); c.height = Math.round(vp.height);
-    const ctx = c.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height);
-    await page.render({ canvasContext: ctx, viewport: vp }).promise;
-    return { url: c.toDataURL("image/jpeg", 0.82), w: c.width, h: c.height };
+    return renderPdfPage(await doc.getPage(1));
   }
   const bmp = await createImageBitmap(file), k = Math.min(1, MAX / Math.max(bmp.width, bmp.height));
   const c = document.createElement("canvas"); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
@@ -1195,7 +1205,7 @@ async function renderDrawing(file) {
 function matchSheet(name) {
   const norm = s => String(s).toUpperCase().replace(/[^A-Z0-9.]/g, "");
   const base = norm(name.replace(/\.[^.]+$/, ""));
-  return (projectData.drawings || []).map(d => d.number).filter(n => base.includes(norm(n))).sort((a, b) => norm(b).length - norm(a).length)[0] || null;
+  return plDrawings().map(d => d.number).filter(n => base.includes(norm(n))).sort((a, b) => norm(b).length - norm(a).length)[0] || null;
 }
 async function importDrawings(files, forced) {
   if (!files.length) return;
@@ -1208,19 +1218,41 @@ async function importDrawings(files, forced) {
     await commit(`Import drawings: ${part.map(p => p.no).join(", ")}`, d => { for (const p of part) d.drawingFiles[p.no] = { file: p.path, w: p.w, h: p.h, importedAt: Date.now() }; },
       part.map(p => ({ path: p.path, base64: p.url.split(",")[1] })));
   };
+  const queue = async (no, r) => {
+    const path = `drawings/${no.replace(/[^A-Za-z0-9.-]/g, "_")}-${Date.now().toString(36)}.jpg`;
+    localPhotos.set(path, r.url);
+    batch.push({ no, path, ...r });
+    if (batch.length >= 4) { say(`Uploading… (${done} done)`); await flush(); }
+  };
   try {
     for (const f of files) {
+      // Combined PDF (several sheets in one file): split it and match each page by its "Unit ###" title.
+      if (!forced && isPdf(f)) {
+        const lib = await loadPdfJs();
+        const doc = await lib.getDocument({ data: await f.arrayBuffer() }).promise;
+        if (doc.numPages > 1) {
+          const ordered = plDrawings().map(d => d.number).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+          const seen = new Set();
+          for (let i = 1; i <= doc.numPages; i++) {
+            const page = await doc.getPage(i);
+            let no = await sheetFromPageText(page);
+            if (!no && doc.numPages === ordered.length) no = ordered[i - 1];
+            if (!no || seen.has(no)) { skipped.push(`${f.name} page ${i}`); page.cleanup(); continue; }
+            seen.add(no);
+            say(`Preparing ${no} (page ${i} of ${doc.numPages})…`);
+            done++; await queue(no, await renderPdfPage(page));
+          }
+          await doc.destroy();
+          continue;
+        }
+      }
       const no = forced || matchSheet(f.name);
       if (!no) { skipped.push(f.name); continue; }
       say(`Preparing ${no} (${++done} of ${files.length})…`);
-      const r = await renderDrawing(f);
-      const path = `drawings/${no.replace(/[^A-Za-z0-9.-]/g, "_")}-${Date.now().toString(36)}.jpg`;
-      localPhotos.set(path, r.url);
-      batch.push({ no, path, ...r });
-      if (batch.length >= 4) { say(`Uploading… (${done} of ${files.length})`); await flush(); }
+      await queue(no, await renderDrawing(f));
     }
     say("Uploading…"); await flush();
-    say(`Imported ${plural(done, "drawing", "drawings")}.${skipped.length ? ` Skipped (no sheet number in name): ${skipped.join(", ")}` : ""}`);
+    say(`Imported ${plural(done, "drawing", "drawings")}.${skipped.length ? ` Skipped (couldn’t match to a sheet): ${skipped.join(", ")}` : ""}`);
     toast(`Imported ${plural(done, "drawing", "drawings")}`);
   } catch (e) { say(e.message === "pdf.js" ? "Couldn’t load the PDF reader. Check your connection." : "Import stopped. Try again with the remaining files."); }
 }
@@ -1228,7 +1260,7 @@ async function importDrawings(files, forced) {
 // ---------- sheet viewer with pins ----------
 let pzState = null;
 function pcSheet(no, focus) {
-  const d = (projectData.drawings || []).find(x => x.number === no);
+  const d = plDrawings().find(x => x.number === no);
   if (!d) { app.append(el("p", { class: "empty" }, "Sheet not found.")); return; }
   const file = drawingFile(no);
   const onSheet = pcItems().filter(i => i.pin && i.pin.sheet === no);
@@ -1404,29 +1436,6 @@ function pcPhotos() {
       return el("button", { type: "button", "aria-label": `#${i.number} ${i.title}`, onclick: () => openPhoto(i) }, img, el("span", { class: "cap" }, `#${i.number} ${i.room || ""}`), i.video ? el("span", { class: "vbadge" }, "▶") : null);
     })));
   }
-}
-
-// ---------- directory ----------
-function pcDirectory() {
-  const tradeOf = {}; for (const [t, c] of Object.entries(TRADE_SUBS)) (tradeOf[c] ||= []).push(t);
-  const q = el("input", { type: "search", placeholder: "Search people and companies", "aria-label": "Search directory" });
-  const list = el("div");
-  const draw = () => {
-    const t = q.value.trim().toLowerCase(), m = s => !t || String(s).toLowerCase().includes(t);
-    const subs = Object.keys(tradeOf).filter(c => m(c + tradeOf[c].join(" ")));
-    const people = (projectData.team || []).filter(p => m(`${p.name} ${p.title} ${p.company}`));
-    list.replaceChildren(
-      el("h2", {}, "Subcontractors by trade"),
-      ...subs.map(c => el("div", { class: "person" }, el("b", {}, c), el("div", {}, tradeOf[c].join(", ")))),
-      el("h2", {}, "People"),
-      ...people.map(p => el("div", { class: "person" }, el("b", {}, p.name),
-        el("div", {}, [p.title, p.company].filter(Boolean).join(" · ")),
-        el("div", {}, ...[p.mobile_phone || p.business_phone ? el("a", { href: "tel:" + String(p.mobile_phone || p.business_phone).replace(/[^\d+]/g, "") }, p.mobile_phone || p.business_phone) : null,
-          p.email ? el("span", {}, (p.mobile_phone || p.business_phone) ? " · " : "", el("a", { href: "mailto:" + p.email }, p.email)) : null]))));
-  };
-  q.addEventListener("input", draw);
-  app.append(el("div", { class: "filters" }, q), list);
-  draw();
 }
 
 // ---------- boot ----------
