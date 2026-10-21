@@ -1,17 +1,4 @@
 {
- "units": {
-  "zz": {
-   "name": "ZZ"
-  }
- },
- "items": [
-  {
-   "id": "t1",
-   "unit": "zz",
-   "title": "test",
-   "photo": "photos/t1.jpg",
-   "thumb": "photos/t1-t.jpg",
-   "status": "open"
-  }
- ]
+ "units": {},
+ "items": []
 }
