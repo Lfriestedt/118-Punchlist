@@ -571,7 +571,7 @@ function itemCard(it, showUnit) {
   return card;
 }
 function sharePanel(r) {
-  if (!isOwner) return null;
+  if (!isOwner) return "";
   const url = pageURL(r);
   const input = el("input", { type: "text", value: url, readonly: "", "aria-label": "Link to this page" });
   return el("div", { class: "sharebox noprint" }, input, el("button", { class: "btn", type: "button", onclick: async () => {
